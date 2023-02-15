@@ -1,0 +1,14 @@
+{
+  "name": "switchbox",
+  "hue_ip": "",
+  "hue_bridge_id": "",
+  "hue_name": "",
+  "hue_brightness": "",
+  "dmx_brightness": "",
+  "fade_interval": "",
+  "paired": "",
+  "slave_ip": "",
+  "debug": "True",
+  "audio_volume": "",
+  "audio_output": ""
+}

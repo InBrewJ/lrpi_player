@@ -8,28 +8,34 @@ from urllib.request import Request, urlopen
 from urllib import parse
 import requests
 from Lighting import LushRoomsLighting
-import ntplib # pylint: disable=import-error
+import ntplib  # pylint: disable=import-error
 from time import ctime
-import pause # pylint: disable=import-error
-from pysrt import open as srtopen # pylint: disable=import-error
+import pause  # pylint: disable=import-error
+from pysrt import open as srtopen  # pylint: disable=import-error
 from pysrt import stream as srtstream
-import datetime, calendar
+import datetime
+import calendar
 import json
 
 # utils
 
 NTP_SERVER = 'ns1.luns.net.uk'
 
+
 def findArm():
     return uname().machine == 'armv7l'
+
 
 if findArm():
     from OmxPlayer import OmxPlayer
 else:
     from VlcPlayer import VlcPlayer
 
+
 class LushRoomsPlayer():
     def __init__(self, playlist, basePath):
+        # TODO BANANA: arch will differ here
+        # Additionally, Omxplayer likely won't work on a Banana - favour vlc going forward?
         if uname().machine == 'armv7l':
             # we're likely on a 'Pi
             self.playerType = "OMX"
@@ -45,19 +51,19 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 2.0 # seconds
+        self.slaveCommandOffset = 2.0  # seconds
         self.slaveUrl = None
         self.status = {
-            "source" : "",
-            "subsPath" : "",
-            "playerState" : "",
-            "canControl" : "",
-            "paired" : False,
-            "position" : "",
-            "trackDuration" : "",
+            "source": "",
+            "subsPath": "",
+            "playerState": "",
+            "canControl": "",
+            "paired": False,
+            "position": "",
+            "trackDuration": "",
             "playerType": self.playerType,
             "playlist": self.playlist,
-            "error" : "",
+            "error": "",
             "slave_url": None,
             "master_ip": None
         }
@@ -67,11 +73,13 @@ class LushRoomsPlayer():
         return self.playerType
 
     def isMaster(self):
-        print("isMaster",self.player.paired,self.status["master_ip"],self.player.paired and (self.status["master_ip"] is None))
+        print("isMaster", self.player.paired, self.status["master_ip"], self.player.paired and (
+            self.status["master_ip"] is None))
         return self.player.paired and (self.status["master_ip"] is None)
 
     def isSlave(self):
-        print("isSlave",self.player.paired,self.status["master_ip"],self.player.paired and (self.status["master_ip"] is None))
+        print("isSlave", self.player.paired, self.status["master_ip"], self.player.paired and (
+            self.status["master_ip"] is None))
         return self.player.paired and (self.status["master_ip"] is not None)
 
     # Returns the current position in seconds
@@ -88,8 +96,10 @@ class LushRoomsPlayer():
             subs = srtopen(subsPath)
             #subs = srtstream(subsPath)
             end_time = time.time()
-            print("Finished loading SRT file " + subsPath + " - " + str(end_time))
-            print("Total time elapsed: " + str(end_time - start_time) + " seconds")
+            print("Finished loading SRT file " +
+                  subsPath + " - " + str(end_time))
+            print("Total time elapsed: " +
+                  str(end_time - start_time) + " seconds")
 
         if self.isSlave():
             # wait until the sync time to fire everything off
@@ -180,7 +190,6 @@ class LushRoomsPlayer():
         else:
             return 0
 
-
     def seek(self, position):
         if self.started:
             newPos = self.player.seek(position)
@@ -199,11 +208,13 @@ class LushRoomsPlayer():
             print(hostname, 'is up!')
             self.slaveUrl = "http://" + hostname
             print("slaveUrl: ", self.slaveUrl)
-            statusRes = urllib.request.urlopen(self.slaveUrl + "/status").read()
+            statusRes = urllib.request.urlopen(
+                self.slaveUrl + "/status").read()
             print("status: ", statusRes)
             if statusRes:
                 print('Attempting to enslave: ' + hostname)
-                enslaveRes = urllib.request.urlopen(self.slaveUrl + "/enslave").read()
+                enslaveRes = urllib.request.urlopen(
+                    self.slaveUrl + "/enslave").read()
                 print('res from enslave: ', enslaveRes)
                 self.player.setPaired(True, None)
 
@@ -295,22 +306,23 @@ class LushRoomsPlayer():
                 # print('ntp time raw: ', response.tx_time)
                 # print(30*'-' + '\n')
 
-                localTimestamp = calendar.timegm(datetime.datetime.now().timetuple())
-                
+                localTimestamp = calendar.timegm(
+                    datetime.datetime.now().timetuple())
+
                 print('currentUnixTimestamp (local on pi: )', localTimestamp)
                 self.eventSyncTime = localTimestamp + self.slaveCommandOffset
                 print('events sync at: ', ctime(self.eventSyncTime))
 
-
                 # send the event sync time to the slave...
                 # if we don't get a response don't try and trigger the event!
                 self.player.status(self.status)
-                postFields = { \
-                    'command': str(command), \
-                    'master_status': self.getStatus(), \
-                    'sync_timestamp': self.eventSyncTime \
+                postFields = {
+                    'command': str(command),
+                    'master_status': self.getStatus(),
+                    'sync_timestamp': self.eventSyncTime
                 }
-                slaveRes = requests.post(self.slaveUrl + '/command', json=postFields)
+                slaveRes = requests.post(
+                    self.slaveUrl + '/command', json=postFields)
                 print('command from slave, res: ', slaveRes)
 
                 return self.eventSyncTime
@@ -319,12 +331,10 @@ class LushRoomsPlayer():
                 print('Could not get ntp time!')
                 print('Why: ', e)
 
-
         else:
             print('Not paired, cannot send commands to slave')
 
         return None
-
 
     def exit(self):
         self.player.exit()

@@ -432,6 +432,11 @@ class LushRoomsLighting():
         self.subs = subs
         self.dmx_interpolator.__init__()
         subs_length = len(self.subs)
+
+        if self.PLAY_HUE == False and self.PLAY_HUE == False:
+            print("All lighting is disabled, not starting lighting event loop...")
+            return
+
         if subs is not None:
             if LIGHTING_MSGS:
                 print("Lighting: Start!")

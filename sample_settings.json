@@ -10,5 +10,6 @@
   "slave_ip": "",
   "debug": "True",
   "audio_volume": "",
-  "audio_output": ""
+  "audio_output": "",
+  "media_base_path": "/home/inbrewj/workshop/LushRooms/faux_usb/"
 }

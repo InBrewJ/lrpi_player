@@ -37,12 +37,12 @@ os.environ["FLASK_ENV"] = "development"
 # Remember to update docs/gdrive examples!
 
 mpegOnly = True
-mlpOnly = False
 allFormats = False
 useNTP = False
 
 app = Flask(__name__,  static_folder='static')
 api = Api(app)
+CORS(app)
 
 SENTRY_URL = os.environ.get("SENTRY_URL")
 
@@ -52,21 +52,19 @@ if SENTRY_URL is not None:
 
 
 NTP_SERVER = 'ns1.luns.net.uk'
-BASE_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/"
-MEDIA_BASE_PATH = BASE_PATH + "tracks/"
+# BASE_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/"
 BUILT_PATH = None
 AUDIO_PATH_TEST_MP4 = "5.1_AAC_Test.mp4"
 JSON_LIST_FILE = "content.json"
 MENU_DMX_VAL = os.environ.get("MENU_DMX_VAL", None)
 
-TEST_TRACK = MEDIA_BASE_PATH + AUDIO_PATH_TEST_MP4
 NEW_TRACK_ARRAY = []
 NEW_SRT_ARRAY = []
 
 player = None
 paused = None
 
-CORS(app)
+
 # killOmx as soon as the server starts...
 # killOmx()
 
@@ -78,7 +76,6 @@ CORS(app)
 
 
 def sigint_handler(signum, frame):
-    killOmx()
     exit()
 
 
@@ -89,14 +86,18 @@ def getInput():
     print("Getting input...")
     parser = reqparse.RequestParser()
     print("got a parser...")
-    parser.add_argument('id', help='error with id')
-    parser.add_argument('interval', help='error with interval')
-    parser.add_argument('position', help='error with position')
-    parser.add_argument('pairhostname', help='error with pairHostname')
+    parser.add_argument('id', help='error with id', location="args")
+    parser.add_argument(
+        'interval', help='error with interval', location="args")
+    parser.add_argument(
+        'position', help='error with position', location="args")
+    parser.add_argument(
+        'pairhostname', help='error with pairHostname', location="args")
     # command and status should definitely be sent via POST...
     parser.add_argument('commandFromMaster',
-                        help='error with commandFromMaster')
-    parser.add_argument('masterStatus', help='error with masterStatus')
+                        help='error with commandFromMaster', location="args")
+    parser.add_argument(
+        'masterStatus', help='error with masterStatus', location="args")
     print("pre parse_args")
     args = {"id": None}
     try:
@@ -166,6 +167,8 @@ class GetTrackList(Resource):
         global BUILT_PATH
         global player
 
+        MEDIA_BASE_PATH = settings.get_combined_settings()["media_base_path"]
+
         try:
 
             if useNTP:
@@ -201,7 +204,7 @@ class GetTrackList(Resource):
 
             print("track list id: " + str(args['id']))
 
-            if "id" in args and args['id']:
+            if args['id']:
                 if NEW_TRACK_ARRAY:
                     BUILT_PATH += [x['Path']
                                    for x in NEW_TRACK_ARRAY if x['ID'] == args['id']][0] + "/"
@@ -216,9 +219,6 @@ class GetTrackList(Resource):
             if mpegOnly:
                 NEW_TRACK_ARRAY = [x for x in TRACK_ARRAY_WITH_CONTENTS if ((x['Name'] != JSON_LIST_FILE) and (
                     splitext(x['Name'])[1].lower() != ".srt") and (splitext(x['Name'])[1].lower() != ".mlp"))]
-            elif mlpOnly:
-                NEW_TRACK_ARRAY = [x for x in TRACK_ARRAY_WITH_CONTENTS if ((x['Name'] != JSON_LIST_FILE) and (
-                    splitext(x['Name'])[1].lower() != ".srt") and (splitext(x['Name'])[1].lower() != ".mp4"))]
             elif allFormats:
                 NEW_TRACK_ARRAY = [x for x in TRACK_ARRAY_WITH_CONTENTS if (
                     (x['Name'] != JSON_LIST_FILE) and (splitext(x['Name'])[1].lower() != ".srt"))]
@@ -245,7 +245,6 @@ class GetTrackList(Resource):
 class PlaySingleTrack(Resource):
     def get(self):
         global player
-        global paused
         global BUILT_PATH
 
         pathToTrack = "/not/valid/path/at/all"
@@ -528,4 +527,4 @@ api.add_resource(ScentRoomTrigger, '/scentroom-trigger')  # POST
 if __name__ == '__main__':
     settings_json = settings.get_settings()
     app.run(debug=settings_json["debug"], port=os.environ.get(
-        "PORT", "8080"), host='0.0.0.0')
+        "PORT", "8686"), host='0.0.0.0')

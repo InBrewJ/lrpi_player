@@ -26,7 +26,7 @@ def findArm():
     return uname().machine == 'armv7l'
 
 
-if findArm():
+if False:
     from OmxPlayer import OmxPlayer
 else:
     from VlcPlayer import VlcPlayer
@@ -36,15 +36,15 @@ class LushRoomsPlayer():
     def __init__(self, playlist, basePath):
         # TODO BANANA: arch will differ here
         # Additionally, Omxplayer likely won't work on a Banana - favour vlc going forward? Omxplayer is also likely NOT suited for the RPi4 (deprecation note...)
-        if uname().machine == 'armv7l':
+        if False:
             # we're likely on a 'Pi
             self.playerType = "OMX"
             print('Spawning omxplayer')
-            self.player = OmxPlayer()
+            # self.player = OmxPlayer()
         else:
             # we're likely on a desktop
-            print('You are likely on a desktop / NOT a RPi 2 or 3')
-            print('Spawning vlc player')
+            print('You are likely on a desktop / NOT a RPi 2 or 3!')
+            print('Therefore, spawning vlc player')
             self.playerType = "VLC"
             self.player = VlcPlayer()
 
@@ -89,7 +89,7 @@ class LushRoomsPlayer():
         self.status["source"] = path
         self.status["subsPath"] = subsPath
 
-        print("***************  start  ********************")
+        print("***************  player wrapper :: start  ********************")
 
         if os.path.isfile(subsPath):
             start_time = time.time()

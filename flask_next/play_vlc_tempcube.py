@@ -9,7 +9,7 @@ import time
 
 # creating vlc media player object
 player = vlc.MediaPlayer(
-    "/home/inbrewj/workshop/LushRooms/faux_usb/tracks/folder1/ff-16b-2c-folder1.mp4")
+    "/home/pi/workshop/LushRooms/faux_usb/tracks/Misophonia/ff-16b-2c-folder2.mp4")
 
 # start playing audio
 res = player.play()

@@ -3,8 +3,19 @@ import json
 
 _SETTINGS = None
 # TODO: make this an env var
-# SETTINGS_PATH = "/media/usb /settings.json"
-SETTINGS_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/settings.json"
+# SETTINGS_PATH = "/media/usb/settings.json"
+# SETTINGS_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/settings.json"
+SETTINGS_PATH = os.environ.get(
+    "LRPI_SETTINGS_PATH", "/media/usb/settings.json")
+
+# when usb stick is not installed, start with:
+# sudo LRPI_SETTINGS_PATH=/home/inbrewj/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
+
+#
+# on, e.g. a Pi running Raspbian Lite (the tempcube)
+# sudo LRPI_SETTINGS_PATH=~/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
+
+print(f"SETTINGS_PATH :: {SETTINGS_PATH}")
 
 
 def get_settings():
@@ -65,4 +76,6 @@ def get_evn_settings():
     settings["debug"] = os.environ.get("DEBUG") == "true"
     settings["audio_volume"] = int(os.environ.get("AUDIO_VOLUME", "100"))
     settings["audio_output"] = os.environ.get("AUDIO_OUPUT", "hdmi")
+    settings["media_base_path"] = os.environ.get(
+        "MEDIA_BASE_PATH", "/media/usb/tracks")
     return settings

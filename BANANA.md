@@ -5,7 +5,7 @@ In the code, see `# TODO BANANA: <a note>`
 ### Generally
 
 - The lrpi_base image derives from `balenalib/raspberrypi3-debian:stretch` -> this probs isn't applicable anymore
-- The arch may not be `armv7l`, on the Pine64 it's `aarch64`
+- The arch may not be `armv7l`, on the Pine64 it's `aarch64` - what with the banana pi be?
 - omxplayer hasn't had any updates in a while and is designed for the Rpi (3?) hardware. We might favour vlc going forward?
   - If we favour vlc (or something else) - the lrpi_base image needs to change
 - If we don't ensure backwards compatibility with Rpi3, this becomes a hard fork

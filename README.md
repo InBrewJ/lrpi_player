@@ -1,7 +1,26 @@
 # LushRoom Pi player
+
 Cloud connected sound and light player for Lush treatment rooms
 
 Flask/omxplayer/vlcplayer/DMX/HUE/Tinkerforge/SRT
+
+## Local, VLC centric dev
+
+Because VLC should work everywhere, right?
+
+### venv
+
+- Create with
+
+```
+python3 -m venv ./.venv_lrpi_player
+```
+
+- and then, the classic
+
+```
+source ./.venv_lrpi_player/bin/activate
+```
 
 ## Helpers
 
@@ -29,7 +48,6 @@ lushdigital/lushroom-player:staging
 
 In Spa mode:
 
-
 ```
 sudo docker run -it --rm -p 80:80 \
 -v /home/lush/lrpi_player/flask:/opt/code/flask \
@@ -42,13 +60,9 @@ sudo docker run -it --rm -p 80:80 \
 lushdigital/lushroom-player:staging
 ```
 
-
-
 Run a bash terminal for in depth debugging:
 
 ```
-docker run -it --rm -p 80:80 -v /opt/vc:/opt/vc -v /media/usb:/media/usb --device /dev/vchiq:/dev/vchiq --device /dev/fb0:/dev/fb0 --entrypoint "/bin/bash" lushdigital/lushroom-player:staging  
+docker run -it --rm -p 80:80 -v /opt/vc:/opt/vc -v /media/usb:/media/usb --device /dev/vchiq:/dev/vchiq --device /dev/fb0:/dev/fb0 --entrypoint "/bin/bash" lushdigital/lushroom-player:staging
 
 ```
-
-

@@ -1,15 +1,15 @@
-from phue import Bridge, PhueRegistrationException # pylint: disable=import-error
+from phue import Bridge, PhueRegistrationException  # pylint: disable=import-error
 from random import random
 from time import sleep, time, perf_counter
-from pysrt import SubRipFile, SubRipItem, SubRipTime # pylint: disable=import-error
-from pysrt import open as srtopen # pylint: disable=import-error
+from pysrt import SubRipFile, SubRipItem, SubRipTime  # pylint: disable=import-error
+from pysrt import open as srtopen  # pylint: disable=import-error
 from datetime import datetime, timedelta
 from pytz import utc
-from apscheduler.schedulers.background import BackgroundScheduler # pylint: disable=import-error
-from tinkerforge.ip_connection import IPConnection # pylint: disable=import-error
-from tinkerforge.bricklet_dmx import BrickletDMX # pylint: disable=import-error
+from apscheduler.schedulers.background import BackgroundScheduler  # pylint: disable=import-error
+from tinkerforge.ip_connection import IPConnection  # pylint: disable=import-error
+from tinkerforge.bricklet_dmx import BrickletDMX  # pylint: disable=import-error
 from tf_device_ids import deviceIdentifiersList
-from numpy import array, ones, zeros # pylint: disable=import-error
+from numpy import array, ones, zeros  # pylint: disable=import-error
 import os
 import json
 import settings
@@ -33,9 +33,9 @@ PORT = 4223
 # lighting
 
 MAX_BRIGHTNESS = 200
-DMX_FRAME_DURATION=25
+DMX_FRAME_DURATION = 25
 HUE_IP_ADDRESS = ""
-TICK_TIME = 0.1 # seconds
+TICK_TIME = 0.1  # seconds
 # SLEEP_TIME = 0.1 # seconds
 # TRANSITION_TIME = 10 # milliseconds
 
@@ -49,13 +49,14 @@ tfConnect = False
 
 # utils
 
+
 class LushRoomsLighting():
 
     def __init__(self):
         print('Lushroom Lighting init!')
         self.PLAY_HUE = True
         self.PLAY_DMX = True
-        self.TRANSITION_TIME = 5 # milliseconds
+        self.TRANSITION_TIME = 5  # milliseconds
         self.hue_list = [[]]
         self.player = None
         self.scheduler = None
@@ -75,18 +76,20 @@ class LushRoomsLighting():
         self.ipcon = IPConnection()
         self.deviceIDs = [i[0] for i in deviceIdentifiersList]
 
-        if self.PLAY_DMX: self.initDMX()
-        if self.PLAY_HUE: self.initHUE()
+        if self.PLAY_DMX:
+            self.initDMX()
+        if self.PLAY_HUE:
+            self.initHUE()
 
     def emptyDMXFrame(self):
         return zeros((512,), dtype=int)
 
     # Tinkerforge sensors enumeration
     def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version,
-                    device_identifier, enumeration_type):
+                     device_identifier, enumeration_type):
         self.tfIDs.append([uid, device_identifier])
 
-    ############################### LIGHTING FUNCTION METHODS
+    # LIGHTING FUNCTION METHODS
 
     def initDMX(self):
         # configure Tinkerforge DMX
@@ -94,7 +97,8 @@ class LushRoomsLighting():
             self.ipcon.connect(HOST, PORT)
 
             # Register Enumerate Callback
-            self.ipcon.register_callback(IPConnection.CALLBACK_ENUMERATE, self.cb_enumerate)
+            self.ipcon.register_callback(
+                IPConnection.CALLBACK_ENUMERATE, self.cb_enumerate)
 
             # Trigger Enumerate
             self.ipcon.enumerate()
@@ -107,13 +111,14 @@ class LushRoomsLighting():
 
             dmxcount = 0
             for tf in self.tfIDs:
-                if len(tf[0])<=3: # if the device UID is 3 characters it is a bricklet
+                if len(tf[0]) <= 3:  # if the device UID is 3 characters it is a bricklet
                     if tf[1] in self.deviceIDs:
                         if VERBOSE:
-                            print(tf[0],tf[1], self.getIdentifier(tf))
-                    if tf[1] == 285: # DMX Bricklet
+                            print(tf[0], tf[1], self.getIdentifier(tf))
+                    if tf[1] == 285:  # DMX Bricklet
                         if dmxcount == 0:
-                            print("Registering %s as slave DMX device for playing DMX frames" % tf[0])
+                            print(
+                                "Registering %s as slave DMX device for playing DMX frames" % tf[0])
                             self.dmx = BrickletDMX(tf[0], self.ipcon)
                             self.dmx.set_dmx_mode(self.dmx.DMX_MODE_MASTER)
                             self.dmx.set_frame_duration(DMX_FRAME_DURATION)
@@ -123,23 +128,24 @@ class LushRoomsLighting():
                 if LIGHTING_MSGS:
                     print("No DMX devices found.")
         except Exception as e:
-            print("Could not create connection to Tinkerforge DMX. DMX lighting is now disabled")
+            print(
+                "Could not create connection to Tinkerforge DMX. DMX lighting is now disabled")
             print("Why: ", e)
             self.PLAY_DMX = False
 
     def resetDMX(self):
         print("Directly resetting DMX...")
         if self.dmx:
-            self.dmx.write_frame([ int(0.65*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        int(0.40*MAX_BRIGHTNESS),
-                                        0,0,0,int(0.40*MAX_BRIGHTNESS) ])
+            self.dmx.write_frame([int(0.65*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  int(0.40*MAX_BRIGHTNESS),
+                                  0, 0, 0, int(0.40*MAX_BRIGHTNESS)])
         else:
             logging.error("Could not connect to DMX daemon to reset!")
 
@@ -153,7 +159,8 @@ class LushRoomsLighting():
                     self.PLAY_HUE = False
                     return
 
-                self.bridge = Bridge(HUE_IP_ADDRESS, config_file_path="/media/usb/python_hue")
+                self.bridge = Bridge(
+                    HUE_IP_ADDRESS, config_file_path="/home/inbrewj/workshop/LushRooms/faux_usb/python_hue")
                 # If the app is not registered and the button is not pressed, press the button and call connect() (this only needs to be run a single time)
                 self.bridge.connect()
                 # Get the bridge state (This returns the full dictionary that you can explore)
@@ -190,15 +197,16 @@ class LushRoomsLighting():
                 sat = 100
                 hue = 0
                 colortemp = 450
-                cmd =  {'transitiontime' : int(self.TRANSITION_TIME), 'on' : True, 'bri' : int(bri), 'sat' : int(sat), 'hue' : int(hue), 'ct' : colortemp}
-                self.bridge.set_light(l.light_id,cmd)
+                cmd = {'transitiontime': int(self.TRANSITION_TIME), 'on': True, 'bri': int(
+                    bri), 'sat': int(sat), 'hue': int(hue), 'ct': colortemp}
+                self.bridge.set_light(l.light_id, cmd)
 
-    ############################### LOW LEVEL LIGHT METHODS
+    # LOW LEVEL LIGHT METHODS
 
-    def getIdentifier(self, ID): 
+    def getIdentifier(self, ID):
         deviceType = ""
         for t in range(len(self.deviceIDs)):
-            if ID[1]==deviceIdentifiersList[t][0]:
+            if ID[1] == deviceIdentifiersList[t][0]:
                 deviceType = deviceIdentifiersList[t][1]
         return(deviceType)
 
@@ -217,17 +225,17 @@ class LushRoomsLighting():
             # ts = str(timedelta(seconds=t)).replace('.',',')
             # tsd = str(timedelta(seconds=t+10*TICK_TIME)).replace('.',',')
 
-            ts = SubRipTime(seconds = t)
-            tsd = SubRipTime(seconds = t + (1*TICK_TIME))
+            ts = SubRipTime(seconds=t)
+            tsd = SubRipTime(seconds=t + (1*TICK_TIME))
             # print(dir(player))
 
             try:
                 pp = self.player.getPosition()
             except Exception as e:
-                print("Could not get the current position of the player, shutting down lighting gracefully...")
+                print(
+                    "Could not get the current position of the player, shutting down lighting gracefully...")
                 logging.error(e)
                 self.__del__()
-
 
             #ptms = player.get_time()/1000.0
             #pt = SubRipTime(seconds=(player.get_time()/1000.0))
@@ -242,7 +250,8 @@ class LushRoomsLighting():
                 pass
             ## sub, i = self.find_subtitle(subs, ts, tsd)
             # sub, i = self.find_subtitle(self.subs, pt, ptd)
-            sub, i = self.find_subtitle(self.subs, pt, ptd, lo=self.last_played)
+            sub, i = self.find_subtitle(
+                self.subs, pt, ptd, lo=self.last_played)
 
             if DEBUG:
                 print(i, "Found Subtitle for light event:", sub, i)
@@ -250,7 +259,7 @@ class LushRoomsLighting():
             ## hours, minutes, seconds, milliseconds = time_convert(sub.start)
             ## t = seconds + minutes*60 + hours*60*60 + milliseconds/1000.0
 
-            if sub!="": #and i > self.last_played:
+            if sub != "":  # and i > self.last_played:
                 if LIGHTING_MSGS and DEBUG:
                     print(i, "Light event:", sub)
                 # print("Trigger light event %s" % i)
@@ -263,9 +272,9 @@ class LushRoomsLighting():
 
             if self.dmx_interpolator.isRunning() and pod_mode is False:
                 if self.PLAY_DMX:
-                        if self.dmx != None:
-                            iFrame = self.dmx_interpolator.getInterpolatedFrame(pt)
-                            self.dmx.write_frame(iFrame)
+                    if self.dmx != None:
+                        iFrame = self.dmx_interpolator.getInterpolatedFrame(pt)
+                        self.dmx.write_frame(iFrame)
 
             # except Exception as e:
             #     print('ERROR: It is likely the connection to the audio player has been severed...')
@@ -296,11 +305,12 @@ class LushRoomsLighting():
             if backwards and (subtitle[i].start >= from_t):
                 previous_i = max(0, i-1)
                 if SEEK_EVENT_LOG:
-                    print("In subs, at:", previous_i, " found: ", subtitle[previous_i].text)
+                    print("In subs, at:", previous_i,
+                          " found: ", subtitle[previous_i].text)
                 return subtitle[previous_i].text, previous_i
 
             # if (from_t >= subtitle[i].start) & (fro   m_t  <= subtitle[i].end):
-            if (subtitle[i].start >= from_t) & (to_t  >= subtitle[i].start):
+            if (subtitle[i].start >= from_t) & (to_t >= subtitle[i].start):
                 # print(subtitle[i].start, from_t, to_t)
                 if not self.dmx_interpolator.isRunning():
                     self.dmx_interpolator.findNextEvent(i, subtitle)
@@ -317,21 +327,22 @@ class LushRoomsLighting():
     def hue_build_lookup_table(self, lights):
         if DEBUG:
             print("hue lookup lights: ", lights)
-    
+
         hue_l = [[]]
         i = 0
         for j in range(1+len(lights)+1):
             for l in lights:
-                #print(dir(l))
+                # print(dir(l))
                 #lname = "lamp   "+l.name+"   "
                 lname = str(l.name)
-                #print(lname)
+                # print(lname)
                 #print("testing", str(j), lname.find(str(i)), len(hue), l.name.find(str(i)), l.light_id, l.name, l.bridge.ip, l.bridge.name, str(i+1))
-                if lname.find(str(j))>=0:
-                    #if str(i) in lname:
+                if lname.find(str(j)) >= 0:
+                    # if str(i) in lname:
                     if LIGHTING_MSGS:
-                        print(j, lname.find(str(j)), l.light_id, l.name, l.bridge.ip, l.bridge.name)
-                    if len(hue_l)<=j:
+                        print(j, lname.find(str(j)), l.light_id,
+                              l.name, l.bridge.ip, l.bridge.name)
+                    if len(hue_l) <= j:
                         hue_l.append([l.light_id])
                     else:
                         hue_l[j].append(l.light_id)
@@ -354,26 +365,27 @@ class LushRoomsLighting():
                 # print(command)
                 if DEBUG:
                     print(command[0:len(command)-1].split("("))
-                scope,items = command[0:len(command)-1].split("(")
+                scope, items = command[0:len(command)-1].split("(")
 
                 if DEBUG:
                     print("sc: ", scope, "it: ", items)
 
                 if scope[0:3] == "HUE" and self.PLAY_HUE:
                     l = int(scope[3:])
-                    #print(l)
+                    # print(l)
                     if VERBOSE:
                         print(self.hue_list[l])
                     hue, sat, bri, TRANSITION_TIME = items.split(',')
                     # print(perf_counter(), l, items, hue, sat, bri, TRANSITION_TIME)
                     bri = int((float(bri)/255.0)*int(MAX_BRIGHTNESS))
                     # print(bri)
-                    cmd =  {'transitiontime' : int(self.TRANSITION_TIME), 'on' : True, 'bri' : int(bri), 'sat' : int(sat), 'hue' : int(hue)}
+                    cmd = {'transitiontime': int(self.TRANSITION_TIME), 'on': True, 'bri': int(
+                        bri), 'sat': int(sat), 'hue': int(hue)}
                     if LIGHTING_MSGS:
-                        print("Trigger HUE",l,cmd)
+                        print("Trigger HUE", l, cmd)
                     if self.PLAY_HUE:
                         #lights = bridge.lights
-                        #for light in lights:
+                        # for light in lights:
                         #   print(light.name)
                         #   if light.name.find(str(l)):
                         #       light.brightness = bri
@@ -387,9 +399,10 @@ class LushRoomsLighting():
 
                 if scope[0:3] == "DMX":
                     l = int(scope[3:])
-                
+
                     if items == "":
-                        print("Empty DMX event found! Turning all DMX channels off...")
+                        print(
+                            "Empty DMX event found! Turning all DMX channels off...")
                         channels = self.emptyDMXFrame()
                     else:
                         # channels = int(int(MAX_BRIGHTNESS)/255.0*(array(items.split(",")).astype(int)))
@@ -403,23 +416,23 @@ class LushRoomsLighting():
                         if self.dmx != None:
                             self.dmx.write_frame(channels)
             except:
-               pass
+                pass
         if LIGHTING_MSGS and DEBUG:
             print(30*'-')
 
-    ############################### PLAYER FUNCTION METHODS
+    # PLAYER FUNCTION METHODS
 
     def time_convert(self, t):
         block, milliseconds = str(t).split(",")
         hours, minutes, seconds = block.split(":")
-        return(int(hours),int(minutes),int(seconds), int(milliseconds))
+        return(int(hours), int(minutes), int(seconds), int(milliseconds))
 
     def start(self, audioPlayer, subs):
         self.player = audioPlayer
         self.subs = subs
         self.dmx_interpolator.__init__()
         subs_length = len(self.subs)
-        if subs is not None: 
+        if subs is not None:
             if LIGHTING_MSGS:
                 print("Lighting: Start!")
                 print('AudioPlayer: ', self.player)
@@ -430,29 +443,32 @@ class LushRoomsLighting():
 
             if subs_length == 1:
                 if LIGHTING_MSGS:
-                    print("There's only 1 lighting event, so no need to start the scheduler and unleash hell...")
+                    print(
+                        "There's only 1 lighting event, so no need to start the scheduler and unleash hell...")
             elif subs_length > 1:
                 # start lighting scheduler
                 self.scheduler = BackgroundScheduler({
-                'apscheduler.executors.processpool': {
-                    'type': 'processpool',
-                    'max_workers': '10'
-                }})
-                self.scheduler.add_job(self.tick, 'interval', seconds=TICK_TIME, misfire_grace_time=None, max_instances=16, coalesce=True)
+                    'apscheduler.executors.processpool': {
+                        'type': 'processpool',
+                        'max_workers': '10'
+                    }})
+                self.scheduler.add_job(self.tick, 'interval', seconds=TICK_TIME,
+                                       misfire_grace_time=None, max_instances=16, coalesce=True)
                 # This could be the cause of the _very_ first event, after a cold boot, not triggering correctly:
                 self.scheduler.start(paused=False)
 
             if LIGHTING_MSGS:
                 print("-------------")
         else:
-            print('Subtitle track not found/empty subtitle track. Lighting is now disabled')
+            print(
+                'Subtitle track not found/empty subtitle track. Lighting is now disabled')
 
     def playPause(self, status):
 
         print('Lighting PlayPause: ', status)
-        if status=="Paused":
+        if status == "Paused":
             self.scheduler.pause()
-        elif status=="Playing":
+        elif status == "Playing":
             self.scheduler.resume()
         if LIGHTING_MSGS:
             print("-------------")
@@ -463,9 +479,9 @@ class LushRoomsLighting():
         # self.scheduler.shutdown()
         self.last_played = 0
 
-        if status=="Paused":
+        if status == "Paused":
             self.scheduler.pause()
-        elif status=="Playing":
+        elif status == "Playing":
             self.scheduler.resume()
         if LIGHTING_MSGS:
             print("-------------")
@@ -491,7 +507,7 @@ class LushRoomsLighting():
         if LIGHTING_MSGS:
             print("Seeking, found sub:", sub, " at pos: ", i)
 
-        if sub!="": #and i > self.last_played:
+        if sub != "":  # and i > self.last_played:
             if LIGHTING_MSGS and DEBUG:
                 print(i, "Found last lighting event!:", sub)
             # print("Trigger light event %s" % i)
@@ -514,7 +530,7 @@ class LushRoomsLighting():
             if self.scheduler:
                 logging.info("Shutting down scheduler...")
                 self.scheduler.shutdown()
-           
+
             logging.info("Disconnecting from tinkerforge...")
             self.ipcon.disconnect()
             self.dmx = None

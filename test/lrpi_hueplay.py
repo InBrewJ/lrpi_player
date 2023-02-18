@@ -27,7 +27,7 @@ MAX_BRIGHTNESS = 200
 SRT_FILENAME = "Surround_Test_Audio.srt"
 AUDIO_FILENAME = "Surround_Test_Audio.m4a"
 HUE_IP_ADDRESS = "10.0.0.2"
-TICK_TIME = 0.2 # seconds
+TICK_TIME = 0.2  # seconds
 PLAY_HUE = False
 PLAY_AUDIO = True
 
@@ -36,21 +36,24 @@ last_played = 0
 player = None
 b = None
 
+
 def find_subtitle(subtitle, from_t, to_t, lo=0):
     i = lo
     while (i < len(subtitle)):
         # print(subtitle[i])
         if (subtitle[i].start >= to_t):
             break
-        if (subtitle[i].start <= from_t) & (to_t  <= subtitle[i].end):
+        if (subtitle[i].start <= from_t) & (to_t <= subtitle[i].end):
             print(subtitle[i].start, from_t, to_t)
             return subtitle[i].text, i
         i += 1
     return "", i
 
+
 def end_callback(event):
     print('End of media stream (event %s)' % event.type)
     sys.exit(0)
+
 
 def trigger_light_hue(subs):
     # print(perf_counter(), subs)
@@ -59,21 +62,21 @@ def trigger_light_hue(subs):
     for command in commands:
         try:
             # print(command)
-            scope,items = command[0:len(command)-1].split("(")
+            scope, items = command[0:len(command)-1].split("(")
             # print(scope,items)
             if scope[0:3] == "HUE":
                 l = int(scope[3:])
                 hue, sat, bri, TRANSITION_TIME = items.split(',')
                 print(perf_counter(), l, hue, sat, bri, TRANSITION_TIME)
-                cmd =  {'TRANSITION_TIME' : int(TRANSITION_TIME), 'on' : True, 'bri' : int(bri), 'sat' : int(sat), 'hue' : int(hue)}
+                cmd = {'TRANSITION_TIME': int(TRANSITION_TIME), 'on': True, 'bri': int(
+                    bri), 'sat': int(sat), 'hue': int(hue)}
                 if PLAY_HUE:
                     b.set_light(l, cmd)
                 if LIGHTING_MSGS:
-                    print("Trigger light",l,cmd)
+                    print("Trigger light", l, cmd)
         except:
             pass
     print(30*'-')
-
 
 
 def tick():
@@ -85,27 +88,29 @@ def tick():
     t = perf_counter()
     # ts = str(timedelta(seconds=t)).replace('.',',')
     # tsd = str(timedelta(seconds=t+10*TICK_TIME)).replace('.',',')
-    ts = SubRipTime(seconds = t)
-    tsd = SubRipTime(seconds = t+1*TICK_TIME)
+    ts = SubRipTime(seconds=t)
+    tsd = SubRipTime(seconds=t+1*TICK_TIME)
     # print(dir(player))
     pp = player.get_position()
     ptms = player.get_time()/1000.0
     pt = SubRipTime(seconds=(player.get_time()/1000.0))
     ptd = SubRipTime(seconds=(player.get_time()/1000.0+1*TICK_TIME))
-    print('Time: %s | %s | %s - %s | %s - %s | %s | %s' % (datetime.now(),t,ts,tsd,pt,ptd,pp,ptms))
+    print('Time: %s | %s | %s - %s | %s - %s | %s | %s' %
+          (datetime.now(), t, ts, tsd, pt, ptd, pp, ptms))
     # sub, i = find_subtitle(subs, ts, tsd)
     sub, i = find_subtitle(subs, pt, ptd)
     # hours, minutes, seconds, milliseconds = time_convert(sub.start)
     # t = seconds + minutes*60 + hours*60*60 + milliseconds/1000.0
     print("Subtitle:", sub, i)
-    if sub!="" and i > last_played:
+    if sub != "" and i > last_played:
         trigger_light_hue(sub)
-        last_played=i
+        last_played = i
+
 
 def time_convert(t):
     block, milliseconds = str(t).split(",")
     hours, minutes, seconds = block.split(":")
-    return(int(hours),int(minutes),int(seconds), int(milliseconds))
+    return(int(hours), int(minutes), int(seconds), int(milliseconds))
 
 
 def main():
@@ -113,15 +118,21 @@ def main():
     global player
     global bridge
     global SRT_FILENAME, AUDIO_FILENAME, MAX_BRIGHTNESS, TICK_TIME, HUE_IP_ADDRESS
-    parser = argparse.ArgumentParser(description="LushRoom sound and light command-line player")
+    parser = argparse.ArgumentParser(
+        description="LushRoom sound and light command-line player")
     # group = parser.add_mutually_exclusive_group()
     # group.add_argument("-v", "--verbose", action="store_true")
     # group.add_argument("-q", "--quiet", action="store_true")
-    parser.add_argument("-s","--srt", default=SRT_FILENAME, help=".srt file name for lighting events")
-    parser.add_argument("-a","--audio", default=AUDIO_FILENAME, help="audio file for sound stream")
-    parser.add_argument("-b","--brightness", default=MAX_BRIGHTNESS, help="maximum brightness")
-    parser.add_argument("-t","--time", default=TICK_TIME, help="time between events")
-    parser.add_argument("--hue", default=HUE_IP_ADDRESS, help="Philips Hue bridge IP address")
+    parser.add_argument("-s", "--srt", default=SRT_FILENAME,
+                        help=".srt file name for lighting events")
+    parser.add_argument("-a", "--audio", default=AUDIO_FILENAME,
+                        help="audio file for sound stream")
+    parser.add_argument("-b", "--brightness",
+                        default=MAX_BRIGHTNESS, help="maximum brightness")
+    parser.add_argument("-t", "--time", default=TICK_TIME,
+                        help="time between events")
+    parser.add_argument("--hue", default=HUE_IP_ADDRESS,
+                        help="Philips Hue bridge IP address")
 
     args = parser.parse_args()
 
@@ -130,11 +141,13 @@ def main():
     if PLAY_AUDIO:
         player = vlc.MediaPlayer(AUDIO_FILENAME)
         event_manager = player.event_manager()
-        event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, end_callback)
+        event_manager.event_attach(
+            vlc.EventType.MediaPlayerEndReached, end_callback)
 
     if PLAY_HUE:
         # b = Bridge('lushroom-hue.local')
-        bridge = Bridge(HUE_IP_ADDRESS, config_file_path="/media/usb/python_hue")
+        bridge = Bridge(
+            HUE_IP_ADDRESS, config_file_path="/home/inbrewj/workshop/LushRooms/faux_usb/python_hue")
         # If the app is not registered and the button is not pressed, press the button and call connect() (this only needs to be run a single time)
         bridge.connect()
         # Get the bridge state (This returns the full dictionary that you can explore)
@@ -143,7 +156,7 @@ def main():
         # Print light names
         for l in lights:
             print(l.name)
-            #print(dir(l))
+            # print(dir(l))
         # Set brightness of each light to 10
         for l in lights:
             l.brightness = 1
@@ -154,7 +167,7 @@ def main():
 
     subs = srtopen(SRT_FILENAME)
 
-    print("Number of lighting events",len(subs))
+    print("Number of lighting events", len(subs))
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(tick, 'interval', seconds=TICK_TIME)
@@ -168,10 +181,10 @@ def main():
         while True:
             sleep(0.01)
             try:
-                if keyboard.is_pressed('p'): # pause
+                if keyboard.is_pressed('p'):  # pause
                     scheduler.pause()
                     player.pause()
-                elif keyboard.is_pressed('r'): # resume
+                elif keyboard.is_pressed('r'):  # resume
                     scheduler.resume()
                     player.play()
                 # elif keyboard.is_pressed('s'): # stop
@@ -239,7 +252,7 @@ if __name__ == "__main__":
 #'__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__',
 #'__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_cmpkey', '_compare',
 #'characters_per_second', 'duration', 'end', 'from_lines', 'from_string', 'index',
-#'position', 'shift', 'split_timestamps', 'start', 'text', 'text_without_tags']
+# 'position', 'shift', 'split_timestamps', 'start', 'text', 'text_without_tags']
 
 # print("Time before running scheduler", time(), perf_counter())
 # # s.run()

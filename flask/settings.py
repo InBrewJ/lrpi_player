@@ -2,7 +2,9 @@ import os
 import json
 
 _SETTINGS = None
-SETTINGS_PATH = "/media/usb/settings.json"
+# TODO: make this an env var
+# SETTINGS_PATH = "/media/usb /settings.json"
+SETTINGS_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/settings.json"
 
 
 def get_settings():
@@ -17,9 +19,7 @@ def get_settings():
     return _SETTINGS
 
 
-
 def get_combined_settings():
-
     """
     In order of precedence:
     json

@@ -2,6 +2,8 @@ from os import uname, system
 from time import sleep
 import vlc
 from vlc import State
+from time import ctime
+import pause  # pylint: disable=import-error
 
 
 # Useful vlc binding docs
@@ -16,16 +18,32 @@ class VlcPlayer():
         self.masterIp = ""
         self.sourcePath = ""
 
-    def primeForStart(self, pathToTrack):
-        self.start(pathToTrack)
+    def triggerStart(self, pathToTrack, withPause=False):
+        # lrpi_player#105
+        # Audio output can be routed through hdmi or the jack,
+        # if settings.json is corrupted, default to the hdmi
 
-    def start(self, pathToTrack, syncTimestamp=None, master=False):
+        # todo - set volume via settings.json!
+        # settings_json = settings.get_settings()
+        # output_route = settings_json.get("audio_output")
+
+        if not withPause:
+            self.startWithPause(pathToTrack)
+            self.player.play()
+        elif withPause:
+            self.startWithPause(pathToTrack)
+
+    def primeForStart(self, pathToTrack):
+        print("priming vlc for start - loading track in PAUSED state")
+        self.triggerStart(pathToTrack, withPause=True)
+
+    def startWithPause(self, pathToTrack):
+
         print(f"Setting media to {pathToTrack}")
         self.player = vlc.MediaPlayer(pathToTrack)
         self.sourcePath = pathToTrack
 
         # play the track at zero volume to get the info
-
         self.player.audio_set_volume(0)
         self.player.play()
 
@@ -38,10 +56,38 @@ class VlcPlayer():
         self.player.audio_set_volume(80)
 
         print(f"After init, source :: {str(self.player.get_media())}")
-        self.player.play()
-        print("************** Playing on vlc...",
-              self.player.get_length() / 1000)
-        return self.player.get_length() / 1000
+
+    def start(self, pathToTrack, syncTimestamp=None, master=False):
+        try:
+            if not master:
+                if self.player:
+                    self.player.release()
+                self.player = None
+
+            if syncTimestamp:
+                print(f"Pausing start until {syncTimestamp}")
+                pause.until(syncTimestamp)
+
+            if self.player is None or syncTimestamp is None:
+                self.triggerStart(pathToTrack)
+
+            # if volume is not None:
+            #     self.audio_volume = volume
+            #     print("Volume set to %s" % self.audio_volume)
+
+            # self.player.set_volume(float(self.audio_volume)/100.0)
+
+            print('synctime in vlcplayer: ', ctime(syncTimestamp))
+            if master:
+                self.player.play()
+            print("************** Playing on vlc...",
+                  self.player.get_length() / 1000)
+            return self.player.get_length() / 1000
+        except Exception as e:
+            print("ERROR: Could not start player... but audio may still be playing!")
+            print("Why: ", e)
+            print("returning position 0...")
+            return str(0)
 
     def status(self, status):
         if self.player != None:

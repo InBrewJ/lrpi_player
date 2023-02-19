@@ -39,7 +39,7 @@ print("LushRooms player starting!")
 
 mpegOnly = True
 allFormats = False
-useNTP = False
+useNTP = True
 
 app = Flask(__name__,  static_folder='static')
 api = Api(app)
@@ -52,7 +52,8 @@ if SENTRY_URL is not None:
     sentry = Sentry(app, dsn=SENTRY_URL)
 
 
-NTP_SERVER = 'ns1.luns.net.uk'
+# NTP_SERVER = 'ns1.luns.net.uk'
+NTP_SERVER = 'uk.pool.ntp.org'
 # BASE_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/"
 BUILT_PATH = None
 AUDIO_PATH_TEST_MP4 = "5.1_AAC_Test.mp4"
@@ -175,7 +176,7 @@ class GetTrackList(Resource):
             if useNTP:
                 c = ntplib.NTPClient()
                 try:
-                    response = c.request(NTP_SERVER)
+                    response = c.request(NTP_SERVER, version=3)
                     print('\n' + 30*'-')
                     print('ntp time: ', ctime(response.tx_time))
                     print(30*'-' + '\n')

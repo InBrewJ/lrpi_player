@@ -19,7 +19,8 @@ import json
 
 # utils
 
-NTP_SERVER = 'ns1.luns.net.uk'
+# NTP_SERVER = 'ns1.luns.net.uk'
+NTP_SERVER = 'uk.pool.ntp.org'
 
 
 def findArm():
@@ -52,7 +53,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 2.0  # seconds
+        self.slaveCommandOffset = 5.0  # seconds
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -262,6 +263,11 @@ class LushRoomsPlayer():
             print('master status: ', masterStatus)
             print('startTime: ', startTime)
 
+            print("*" * 30)
+            print(f"SLAVE COMMAND RECEIVED {command}, events sync at: ", ctime(
+                startTime))
+            print("*" * 30)
+
             if command == "start":
                 self.start(
                     masterStatus["source"],
@@ -301,7 +307,7 @@ class LushRoomsPlayer():
                 # tx_time is a unix timestamp
                 # this, among a few other things, means 'party mode'
                 # is only available on the 'Pi'/other unix like systems
-                # response = c.request(NTP_SERVER)
+                # response = c.request(NTP_SERVER, version=3)
                 # print('\n' + 30*'-')
                 # print('ntp time: ', ctime(response.tx_time))
                 # print('ntp time raw: ', response.tx_time)
@@ -312,7 +318,10 @@ class LushRoomsPlayer():
 
                 print('currentUnixTimestamp (local on pi: )', localTimestamp)
                 self.eventSyncTime = localTimestamp + self.slaveCommandOffset
-                print('events sync at: ', ctime(self.eventSyncTime))
+                print("*" * 30)
+                print(f"MASTER COMMAND SENT {command}, events sync at: ", ctime(
+                    self.eventSyncTime))
+                print("*" * 30)
 
                 # send the event sync time to the slave...
                 # if we don't get a response don't try and trigger the event!

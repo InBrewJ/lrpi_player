@@ -1,13 +1,14 @@
 from os import uname, system
 from time import sleep
-from omxplayer.player import OMXPlayer # pylint: disable=import-error
-import ntplib # pylint: disable=import-error
+from omxplayer.player import OMXPlayer  # pylint: disable=import-error
+import ntplib  # pylint: disable=import-error
 from time import ctime
-import pause # pylint: disable=import-error
+import pause  # pylint: disable=import-error
 import datetime
 import os
 import json
 import settings
+
 
 def killOmx():
     # This will only work on Unix-like (just Linux?) systems...
@@ -17,6 +18,7 @@ def killOmx():
     except:
         print('How are you NOT running omxplayer on Linux?')
         exit(0)
+
 
 class OmxPlayer():
     def __init__(self):
@@ -49,25 +51,26 @@ class OmxPlayer():
         if output_route == 'hdmi':
             normalised_output_route = 'hdmi'
             omxArgs += ['-w', '--layout', '5.1']
-        elif output_route == 'jack': 
+        elif output_route == 'jack':
             normalised_output_route = 'local'
 
-        omxArgs += ['-o', normalised_output_route] 
+        omxArgs += ['-o', normalised_output_route]
 
         print('OUTPUT: ' + normalised_output_route)
         print('Full playing args: ' + str(omxArgs))
 
         if not withPause:
-            self.player = OMXPlayer(pathToTrack, args=omxArgs, dbus_name='org.mpris.MediaPlayer2.omxplayer0')
+            self.player = OMXPlayer(
+                pathToTrack, args=omxArgs, dbus_name='org.mpris.MediaPlayer2.omxplayer0')
             sleep(0.25)
         elif withPause:
-            self.player = OMXPlayer(pathToTrack, args=omxArgs, dbus_name='org.mpris.MediaPlayer2.omxplayer0', pause=True)
+            self.player = OMXPlayer(
+                pathToTrack, args=omxArgs, dbus_name='org.mpris.MediaPlayer2.omxplayer0', pause=True)
             # Might need to set the volume to 0 a different way,
             # for some tracks omxplayer plays a short, sharp, shock
             # before setting the volume to 0
             self.player.set_volume(0)
             sleep(0.5)
-
 
     def primeForStart(self, pathToTrack):
         self.triggerStart(pathToTrack, withPause=True)
@@ -144,7 +147,8 @@ class OmxPlayer():
             if (self.player.volume() <= 0.07 or interval == 0):
                 return False
             else:
-                self.player.set_volume(self.player.volume() - ((1.0/interval)/4.0))
+                self.player.set_volume(
+                    self.player.volume() - ((1.0/interval)/4.0))
                 return True
         return False
 
@@ -166,7 +170,8 @@ class OmxPlayer():
             except Exception as e:
                 status["playerState"] = ""
                 status["canControl"] = False
-                status["error"] = "Something went wrong with player status request: " + str(e)
+                status["error"] = "Something went wrong with player status request: " + \
+                    str(e)
 
         else:
             status["playerState"] = ""

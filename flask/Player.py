@@ -53,7 +53,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 5.0  # seconds
+        self.slaveCommandOffset = 2.0  # seconds
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -192,9 +192,14 @@ class LushRoomsPlayer():
         else:
             return 0
 
-    def seek(self, position):
+    def seek(self, position, syncTimestamp=None):
         if self.started:
-            newPos = self.player.seek(position)
+
+            if self.isMaster():
+                print('Master, sending seek!')
+                syncTime = self.sendSlaveCommand('seek', position)
+
+            newPos = self.player.seek(position, syncTimestamp)
             self.lighting.seek(newPos)
             return newPos
 
@@ -255,7 +260,7 @@ class LushRoomsPlayer():
     # When this player is enslaved, map the status of the
     # master to a method
 
-    def commandFromMaster(self, masterStatus, command, startTime):
+    def commandFromMaster(self, masterStatus, command, position, startTime):
         res = 1
         if self.player.paired:
 
@@ -282,6 +287,9 @@ class LushRoomsPlayer():
             if command == "stop":
                 self.stop(startTime)
 
+            if command == "seek":
+                self.seek(position, startTime)
+
             if command == "fadeDown":
                 self.fadeDown(masterStatus["source"],
                               masterStatus["interval"],
@@ -299,7 +307,7 @@ class LushRoomsPlayer():
     # When this player is acting as master, send commands to
     # the slave with a 'start' timestamp
 
-    def sendSlaveCommand(self, command):
+    def sendSlaveCommand(self, command, position=None):
         if self.player.paired:
             print('sending command to slave: ', command)
             # c = ntplib.NTPClient()
@@ -328,6 +336,7 @@ class LushRoomsPlayer():
                 self.player.status(self.status)
                 postFields = {
                     'command': str(command),
+                    'position': str(position),
                     'master_status': self.getStatus(),
                     'sync_timestamp': self.eventSyncTime
                 }

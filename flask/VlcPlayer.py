@@ -102,6 +102,9 @@ class VlcPlayer():
                 if self.player.get_state() == State.Paused:
                     frontend_friendly_status = "Paused"
 
+                # I'm not entirely sure what the tablet ui does
+                # if the status retured = "Stopped"...
+                #
                 # if self.player.get_state() == State.Stopped:
                 #     frontend_friendly_status = "Stopped"
 
@@ -114,7 +117,7 @@ class VlcPlayer():
                 status["paired"] = self.paired
                 status["master_ip"] = self.masterIp
             except Exception as e:
-                status["playerState"] = ""
+                status["playerState"] = "UNKNOWN"
                 status["canControl"] = False
                 status["error"] = "Something went wrong with player status request: " + \
                     str(e)
@@ -126,11 +129,7 @@ class VlcPlayer():
 
         return status
 
-    def playPause(self, syncTime=None):
-        print("Playpausing...", self.player.get_length() / 1000)
-        # self.start()
-        # calling self.pause here has the effect of 'playing' the track (player.pause is a toggle...)
-
+    def playPauseToggler(self):
         player_state = self.player.get_state()
 
         print("Playpausing :: state -> ", str(player_state))
@@ -148,6 +147,14 @@ class VlcPlayer():
             print("State.Playing - attempting to pause")
             self.player.pause()
 
+    def playPause(self, syncTimestamp=None):
+        print("Playpausing...", self.player.get_length() / 1000)
+
+        if syncTimestamp:
+            pause.until(syncTimestamp)
+
+        self.playPauseToggler()
+
         print(f"After playPause, source :: {str(self.player.get_media())}")
 
         return self.player.get_length() / 1000
@@ -161,7 +168,11 @@ class VlcPlayer():
     def getPosition(self):
         return self.player.get_time() / 1000
 
-    def seek(self, position0_to_100):
+    def seek(self, position0_to_100, syncTimestamp=None):
+
+        if syncTimestamp:
+            pause.until(syncTimestamp)
+
         to_0_to_1 = float(position0_to_100) / 100
         print(f"Telling vlc player to seek to {to_0_to_1}")
         self.player.set_position(to_0_to_1)

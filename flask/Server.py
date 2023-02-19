@@ -433,6 +433,7 @@ class Command(Resource):
         res = player.commandFromMaster(
             command["master_status"],
             command["command"],
+            command["position"],
             command["sync_timestamp"]
         )
 

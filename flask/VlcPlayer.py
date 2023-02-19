@@ -11,7 +11,7 @@ class VlcPlayer():
     def __init__(self):
         self.ready = False
         self.vlc_instance = vlc.Instance()
-        self.player = self.vlc_instance.media_player_new()
+        self.player = None
         self.paired = False
         self.masterIp = ""
         self.sourcePath = ""
@@ -24,12 +24,21 @@ class VlcPlayer():
         self.player = vlc.MediaPlayer(pathToTrack)
         self.sourcePath = pathToTrack
 
+        # play the track at zero volume to get the info
+
+        self.player.audio_set_volume(0)
         self.player.play()
-        self.player.pause()
+
         sleep(1.5)
+
+        # pause, go back to the beginning,
+        # set the volume back to something audible
+        self.player.pause()
+        self.player.set_position(0.0)
         self.player.audio_set_volume(80)
+
         print(f"After init, source :: {str(self.player.get_media())}")
-        # self.player.play()
+        self.player.play()
         print("************** Playing on vlc...",
               self.player.get_length() / 1000)
         return self.player.get_length() / 1000
@@ -76,17 +85,21 @@ class VlcPlayer():
         # self.start()
         # calling self.pause here has the effect of 'playing' the track (player.pause is a toggle...)
 
-        if self.player.get_state() == State.NothingSpecial:
+        player_state = self.player.get_state()
+
+        print("Playpausing :: state -> ", str(player_state))
+
+        if player_state == State.NothingSpecial:
             print("State.NothingSpecial - attempting to play")
             self.player.play()
-        elif self.player.get_state() == State.Stopped:
+        elif player_state == State.Stopped:
             print("State.Stopped - attempting to play")
             self.player.play()
-        elif self.player.get_state() == State.Paused:
+        elif player_state == State.Paused:
             print("State.Paused - attempting to play")
             self.player.play()
-        elif self.player.get_state() == State.Playing:
-            print("State.Playing - attempting to play")
+        elif player_state == State.Playing:
+            print("State.Playing - attempting to pause")
             self.player.pause()
 
         print(f"After playPause, source :: {str(self.player.get_media())}")
@@ -100,7 +113,13 @@ class VlcPlayer():
         print('master_ip set to: ', masterIp)
 
     def getPosition(self):
-        print("0:00")
+        return self.player.get_time() / 1000
+
+    def seek(self, position0_to_100):
+        to_0_to_1 = float(position0_to_100) / 100
+        print(f"Telling vlc player to seek to {to_0_to_1}")
+        self.player.set_position(to_0_to_1)
+        return self.getPosition()
 
     def pause(self):
         self.player.pause()

@@ -22,6 +22,33 @@ python3 -m venv ./.venv_lrpi_player
 source ./.venv_lrpi_player/bin/activate
 ```
 
+### Mount lrpi_player code on a remote linux machine to a LushRooms dev environment (a Pi / Banana / Potato / whatever)
+
+- Install `openssh-server` on the remote machine
+
+```
+sudo apt install openssh-server
+```
+
+- Install sshfs on the dev environment
+
+```
+sudo apt update
+sudo apt install sshfs
+```
+
+- Mount the remote `lrpi_player` directory
+
+```
+sudo sshfs -o allow_other,default_permissions inbrewj@pop-os:/home/inbrewj/workshop/LushRooms/lrpi_player ~/workshop/LushRooms/lrpi_player
+```
+
+- Start with faux_usb
+
+```
+sudo LRPI_SETTINGS_PATH=~/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
+```
+
 ## Helpers
 
 Sample sshfs command:

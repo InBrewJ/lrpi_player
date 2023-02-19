@@ -32,6 +32,7 @@ import os
 import os.path
 os.environ["FLASK_ENV"] = "development"
 
+print("LushRooms player starting!")
 
 # 103 -> whitelist is injected from settings.json into the logic that uses the bools below...
 # Remember to update docs/gdrive examples!
@@ -526,5 +527,9 @@ api.add_resource(ScentRoomTrigger, '/scentroom-trigger')  # POST
 
 if __name__ == '__main__':
     settings_json = settings.get_settings()
-    app.run(debug=settings_json["debug"], port=os.environ.get(
+    use_reloader = False
+    print("*" * 30)
+    print(f"HOT RELOAD IS SET TO {use_reloader}")
+    print("*" * 30)
+    app.run(use_reloader=use_reloader, debug=settings_json["debug"], port=os.environ.get(
         "PORT", "8686"), host='0.0.0.0')

@@ -47,3 +47,5 @@ ttable {
 See `lrpi_player/vlc_test/get_available_devices.py`
 
 ## Simple python-vlc script that uses the surround51 configured above
+
+See `lrpi_player/vlc_test/use_5_1_device_vlc.py`

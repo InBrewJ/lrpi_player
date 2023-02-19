@@ -8,6 +8,13 @@ Flask/omxplayer/vlcplayer/DMX/HUE/Tinkerforge/SRT
 
 Because VLC should work everywhere, right?
 
+See:
+
+- lrpi_player/flask_next/play_vlc.py
+- lrpi_player/vlc_test/get_available_devices.py
+- lrpi_player/vlc_test/use_5_1_device_vlc.py
+- lrpi_player/flask/VlcPlayer.py
+
 ### venv
 
 - Create with
@@ -39,6 +46,14 @@ sudo apt install sshfs
 
 - Mount the remote `lrpi_player` directory
 
+generally:
+
+```
+sudo sshfs -o allow_other,default_permissions <user>@<host_with_code>:/path/to/host/lrpi_player ~/path/on/dev/pi/lrpi_player
+```
+
+more selfishly:
+
 ```
 sudo sshfs -o allow_other,default_permissions inbrewj@pop-os:/home/inbrewj/workshop/LushRooms/lrpi_player ~/workshop/LushRooms/lrpi_player
 ```
@@ -49,9 +64,11 @@ sudo sshfs -o allow_other,default_permissions inbrewj@pop-os:/home/inbrewj/works
 sudo LRPI_SETTINGS_PATH=~/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
 ```
 
+Your faux_usb `settings.json` should have the `"media_base_path"` field set to local path, too
+
 ## Helpers
 
-Sample sshfs command:
+Sample sshfs command (to go the other way, mounting files on a dev SBC to your local machine):
 
 ```
 sudo sshfs -o allow_other,defer_permissions,IdentityFile=./lrpi_id_rsa lush@xxx.xxx.xxx.xxx:/home/lush ./mnt

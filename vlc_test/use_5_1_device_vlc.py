@@ -1,6 +1,9 @@
 import vlc
 from time import sleep
 
+# It MIGHT be the case that VLC picks up the audio device based on which one is plugged in
+# e.g. nothing plugged into the jack, something plugged into hdmi0, vlc will send audio out of hdmi0 and so on
+
 # change this to path on your local machine
 MP4_AUDIO_PATH = "/home/pi/workshop/LushRooms/faux_usb/tracks/Graphic/Graphic.mp4"
 

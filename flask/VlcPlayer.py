@@ -53,6 +53,7 @@ class VlcPlayer():
         # set the volume back to something audible
         self.player.pause()
         self.player.set_position(0.0)
+        sleep(0.25)
         self.player.audio_set_volume(80)
 
         print(f"After init, source :: {str(self.player.get_media())}")
@@ -105,8 +106,8 @@ class VlcPlayer():
                 # I'm not entirely sure what the tablet ui does
                 # if the status retured = "Stopped"...
                 #
-                # if self.player.get_state() == State.Stopped:
-                #     frontend_friendly_status = "Stopped"
+                if self.player.get_state() == State.Stopped:
+                    frontend_friendly_status = "Stopped"
 
                 status["source"] = self.sourcePath
                 status["playerState"] = frontend_friendly_status
@@ -201,19 +202,37 @@ class VlcPlayer():
         self.player.audio_set_volume(self.player.audio_get_volume() + 10)
 
     def volumeDown(self, interval):
-        print("vlc downer: ", self.player.audio_get_volume())
-        if (self.player.audio_get_volume() <= 10 or interval == 0):
+        start_volume = 80
+        step = int(int(start_volume / int(interval)) / 4)
+
+        current_volume = self.player.audio_get_volume()
+
+        print("vlc downer: ", str(current_volume))
+        # Vlc volume is between 0 and 100
+        # below 10 is barely audible, ready for crossfading!
+        if (current_volume <= 7 or interval == 0):
+            # False =  we can't lower the volume anymore
             return False
         else:
-            self.player.audio_set_volume(
-                self.player.audio_get_volume() - 100/interval)
+            print(
+                f"Ideal next step based on i: {interval} -> ", step)
+            next_volume_step_down = current_volume - step
+            if (next_volume_step_down < 0):
+                next_volume_step_down = 0
+            self.player.audio_set_volume(next_volume_step_down)
+            # True = the volume is not yet at a minimum
             return True
 
     def exit(self, syncTimestamp=None):
         if self.player:
-            self.player.stop()
+            print("Stopping VLC")
+            # self.player.stop()
+            self.__del__()
         else:
             return 1
 
     def __del__(self):
+        if self.player:
+            self.player.release()
+            self.player = None
         print("VLC died")

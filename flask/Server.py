@@ -85,9 +85,7 @@ signal.signal(signal.SIGINT, sigint_handler)
 
 
 def getInput():
-    print("Getting input...")
     parser = reqparse.RequestParser()
-    print("got a parser...")
     parser.add_argument('id', help='error with id', location="args")
     parser.add_argument(
         'interval', help='error with interval', location="args")
@@ -100,15 +98,13 @@ def getInput():
                         help='error with commandFromMaster', location="args")
     parser.add_argument(
         'masterStatus', help='error with masterStatus', location="args")
-    print("pre parse_args")
     args = {"id": None}
     try:
         args = parser.parse_args()
     except Exception as e:
-        print("Could not parse_args")
-        print("this eeee", e)
+        print("Could not parse_args in getInput")
+        print("Error here :: ", e)
         print("Args will be set to id: None")
-    print("End of getting input...")
     return args
 
 
@@ -191,7 +187,7 @@ class GetTrackList(Resource):
             if BUILT_PATH is None:
                 BUILT_PATH = MEDIA_BASE_PATH
 
-            print('BUILT_PATH init: ' + str(BUILT_PATH))
+            # print('BUILT_PATH init: ' + str(BUILT_PATH))
 
             args = {}
 
@@ -204,7 +200,7 @@ class GetTrackList(Resource):
                 print("****************************")
                 args = {"id": None}
 
-            print("track list id: " + str(args['id']))
+            # print("track list id: " + str(args['id']))
 
             if args['id']:
                 if NEW_TRACK_ARRAY:
@@ -212,10 +208,10 @@ class GetTrackList(Resource):
                                    for x in NEW_TRACK_ARRAY if x['ID'] == args['id']][0] + "/"
                     print(BUILT_PATH[0])
 
-            print('BUILT_PATH: ' + str(BUILT_PATH))
+            # print('BUILT_PATH: ' + str(BUILT_PATH))
 
             TRACK_ARRAY_WITH_CONTENTS = content_in_dir(BUILT_PATH)
-            print(TRACK_ARRAY_WITH_CONTENTS)
+            # print(TRACK_ARRAY_WITH_CONTENTS)
             NEW_SRT_ARRAY = TRACK_ARRAY_WITH_CONTENTS
 
             if mpegOnly:

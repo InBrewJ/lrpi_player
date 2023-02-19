@@ -172,21 +172,30 @@ class LushRoomsPlayer():
 
     def fadeDown(self, path, interval, subs, subsPath, syncTimestamp=None):
 
+        # Fade down the existing track
+
+        print(f"fadeDown with interval {interval} seconds")
+
         self.status["interval"] = interval
         if self.isMaster():
             print('Master, sending fadeDown!')
             syncTime = self.sendSlaveCommand('fadeDown')
             pause.until(syncTime)
 
-        if syncTimestamp:
+        if syncTimestamp and self.isSlave():
+            # this code is only called when isSlave is True?
+            print('fadeDown - Slave - waiting until : ', syncTimestamp)
             pause.until(syncTimestamp)
 
         if interval > 0:
             while self.player.volumeDown(interval):
+                # if interval is 4 seconds here, we'll get a sleep of 0.25 secs
                 sleep(1.0/interval)
+
         self.player.exit()
         self.lighting.exit()
 
+        # Then play the next track!
         if not self.isSlave():
             return self.start(path, subs, subsPath)
         else:

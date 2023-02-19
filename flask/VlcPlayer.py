@@ -4,6 +4,7 @@ import vlc
 from vlc import State
 from time import ctime
 import pause  # pylint: disable=import-error
+import settings
 
 
 # Useful vlc binding docs
@@ -21,17 +22,36 @@ class VlcPlayer():
     def triggerStart(self, pathToTrack, withPause=False):
         # lrpi_player#105
         # Audio output can be routed through hdmi or the jack,
-        # if settings.json is corrupted, default to the hdmi
+        # if settings.json is corrupted, default to the jack
 
         # todo - set volume via settings.json!
         # settings_json = settings.get_settings()
         # output_route = settings_json.get("audio_output")
 
+        settings_json = settings.get_settings()
+        output_route = settings_json.get("audio_output")
+        normalised_audio_device_output = 'alsa_output.platform-bcm2835_audio.analog-stereo'
+
+        if output_route == 'hdmi':
+            normalised_audio_device_output = 'to_find'
+            # see /lrpi_player/VLC_5_1_audio_output_settings.md
+            SUSPECTED_5_1_DMI_DEVICE_ID = "alsa_output.platform-vc4-hdmi-0_audio.surround51"
+        elif output_route == 'jack':
+            normalised_audio_device_output = 'alsa_output.platform-bcm2835_audio.analog-stereo'
+
         if not withPause:
             self.startWithPause(pathToTrack)
+            # Not sure yet where the best place to call audio_output_device_set is
+            # self.player.audio_output_device_set(
+            #     None, normalised_audio_device_output)
+
+            # calling stop here to pick up the audio device change
+            # self.player.stop()
             self.player.play()
         elif withPause:
             self.startWithPause(pathToTrack)
+            # self.player.audio_output_device_set(
+            #     None, normalised_audio_device_output)
 
     def primeForStart(self, pathToTrack):
         print("priming vlc for start - loading track in PAUSED state")
@@ -71,12 +91,6 @@ class VlcPlayer():
 
             if self.player is None or syncTimestamp is None:
                 self.triggerStart(pathToTrack)
-
-            # if volume is not None:
-            #     self.audio_volume = volume
-            #     print("Volume set to %s" % self.audio_volume)
-
-            # self.player.set_volume(float(self.audio_volume)/100.0)
 
             print('synctime in vlcplayer: ', ctime(syncTimestamp))
             if master:

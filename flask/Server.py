@@ -37,8 +37,8 @@ print("LushRooms player starting!")
 # 103 -> whitelist is injected from settings.json into the logic that uses the bools below...
 # Remember to update docs/gdrive examples!
 
-mpegOnly = True
-allFormats = False
+mpegOnly = False
+allFormats = True
 useNTP = True
 
 app = Flask(__name__,  static_folder='static')

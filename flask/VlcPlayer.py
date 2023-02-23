@@ -13,91 +13,90 @@ import settings
 class VlcPlayer():
     def __init__(self):
         self.ready = False
-        self.vlc_instance = vlc.Instance()
-        self.player = None
+        self.instance = vlc.Instance()
+        self.player = self.instance.media_player_new()
         self.paired = False
         self.masterIp = ""
         self.sourcePath = ""
 
-    def triggerStart(self, pathToTrack, withPause=False):
+    def getAudioOutput(self, settings_json):
         # lrpi_player#105
         # Audio output can be routed through hdmi or the jack,
         # if settings.json is corrupted, default to the jack
+        output_route = settings_json.get("audio_output")
 
+        # output_route is jack or hdmi...
+
+        # platform-bcm2835_audio.analog-stereo is the jack on RPi4
+        normalised_audio_device_output = 'alsa_output.platform-bcm2835_audio.analog-stereo'
+        return normalised_audio_device_output
+
+    def setOutputDevice(self, device_id):
+        print(f"Setting VLC audio output to {device_id}")
+        self.player.audio_output_device_set(
+            None, device_id)
+
+    def initPlayer(self, pathToTrack):
         # todo - set volume via settings.json!
         # settings_json = settings.get_settings()
         # output_route = settings_json.get("audio_output")
 
-        settings_json = settings.get_settings()
-        output_route = settings_json.get("audio_output")
-        normalised_audio_device_output = 'alsa_output.platform-bcm2835_audio.analog-stereo'
+        print(f"initPlayer: Setting media to {pathToTrack}")
+        media = self.instance.media_new(pathToTrack)
+        self.player.set_media(media)
+        audio_output_device = self.getAudioOutput(settings.get_settings())
+        self.setOutputDevice(audio_output_device)
+        print(f"initPlayer: Setting volume to {70}")
+        sleep(0.5)
+        self.setVolume(70)
 
-        if output_route == 'hdmi':
-            normalised_audio_device_output = 'to_find'
-            # see /lrpi_player/VLC_5_1_audio_output_settings.md
-            SUSPECTED_5_1_DMI_DEVICE_ID = "alsa_output.platform-vc4-hdmi-0_audio.surround51"
-        elif output_route == 'jack':
-            normalised_audio_device_output = 'alsa_output.platform-bcm2835_audio.analog-stereo'
+    def getTrackLength(self):
+        sleep(0.3)
+        length_from_vlc = self.player.get_length() / 1000
+        if length_from_vlc < 0:
+            return 0
+        else:
+            return length_from_vlc
 
+    def getVolume(self):
+        return self.player.audio_get_volume()
+
+    def setVolume(self, value_0_to_100):
+        print(f"setVolume: Setting volume to {value_0_to_100}")
+        return self.player.audio_set_volume(value_0_to_100)
+
+    def triggerStart(self, pathToTrack, withPause=False):
         if not withPause:
-            self.startWithPause(pathToTrack)
-            # Not sure yet where the best place to call audio_output_device_set is
-            # self.player.audio_output_device_set(
-            #     None, normalised_audio_device_output)
-
-            # calling stop here to pick up the audio device change
-            # self.player.stop()
+            self.initPlayer(pathToTrack)
             self.player.play()
         elif withPause:
-            self.startWithPause(pathToTrack)
-            # self.player.audio_output_device_set(
-            #     None, normalised_audio_device_output)
+            self.initPlayer(pathToTrack)
 
     def primeForStart(self, pathToTrack):
         print("priming vlc for start - loading track in PAUSED state")
         self.triggerStart(pathToTrack, withPause=True)
 
-    def startWithPause(self, pathToTrack):
-
-        print(f"Setting media to {pathToTrack}")
-        self.player = vlc.MediaPlayer(pathToTrack)
-        self.sourcePath = pathToTrack
-
-        # play the track at zero volume to get the info
-        self.player.audio_set_volume(0)
-        self.player.play()
-
-        sleep(1.5)
-
-        # pause, go back to the beginning,
-        # set the volume back to something audible
-        self.player.pause()
-        self.player.set_position(0.0)
-        sleep(0.25)
-        self.player.audio_set_volume(80)
-
-        print(f"After init, source :: {str(self.player.get_media())}")
-
     def start(self, pathToTrack, syncTimestamp=None, master=False):
         try:
-            if not master:
-                if self.player:
-                    self.player.release()
-                self.player = None
 
+            print('synctime in vlcplayer: ', ctime(syncTimestamp))
             if syncTimestamp:
                 print(f"Pausing start until {syncTimestamp}")
                 pause.until(syncTimestamp)
 
-            if self.player is None or syncTimestamp is None:
-                self.triggerStart(pathToTrack)
+            if not master:
+                if self.player:
+                    self.player.stop()
 
-            print('synctime in vlcplayer: ', ctime(syncTimestamp))
-            if master:
-                self.player.play()
+            self.triggerStart(pathToTrack)
+
+            track_length_seconds = self.getTrackLength()
+
             print("************** Playing on vlc...",
-                  self.player.get_length() / 1000)
-            return self.player.get_length() / 1000
+                  track_length_seconds)
+
+            print(f"************** at volume {self.getVolume()}")
+            return track_length_seconds
         except Exception as e:
             print("ERROR: Could not start player... but audio may still be playing!")
             print("Why: ", e)
@@ -111,15 +110,13 @@ class VlcPlayer():
 
                 frontend_friendly_status = ""
 
+                # todo - map to simple dict
                 if self.player.get_state() == State.Playing:
                     frontend_friendly_status = "Playing"
 
                 if self.player.get_state() == State.Paused:
                     frontend_friendly_status = "Paused"
 
-                # I'm not entirely sure what the tablet ui does
-                # if the status retured = "Stopped"...
-                #
                 if self.player.get_state() == State.Stopped:
                     frontend_friendly_status = "Stopped"
 
@@ -127,7 +124,7 @@ class VlcPlayer():
                 status["playerState"] = frontend_friendly_status
                 status["canControl"] = True
                 status["position"] = self.player.get_time() / 1000
-                status["trackDuration"] = self.player.get_length() / 1000
+                status["trackDuration"] = self.getTrackLength()
                 status["error"] = ""
                 status["paired"] = self.paired
                 status["master_ip"] = self.masterIp
@@ -184,7 +181,6 @@ class VlcPlayer():
         return self.player.get_time() / 1000
 
     def seek(self, position0_to_100, syncTimestamp=None):
-
         if syncTimestamp:
             pause.until(syncTimestamp)
 
@@ -233,20 +229,36 @@ class VlcPlayer():
             next_volume_step_down = current_volume - step
             if (next_volume_step_down < 0):
                 next_volume_step_down = 0
-            self.player.audio_set_volume(next_volume_step_down)
+            self.setVolume(next_volume_step_down)
             # True = the volume is not yet at a minimum
             return True
 
     def exit(self, syncTimestamp=None):
         if self.player:
             print("Stopping VLC")
-            # self.player.stop()
+            self.player.stop()
             self.__del__()
         else:
             return 1
 
     def __del__(self):
-        if self.player:
-            self.player.release()
-            self.player = None
+        attempt_to_cleanup_vlc = False
+
+        if attempt_to_cleanup_vlc:
+            try:
+                player_release = self.player.release()
+                print(f"Player release :: {player_release}")
+            except Exception as e:
+                print("Could not release player", e)
+
+            try:
+                instance_release = self.instance.release()
+                print(f"Instance release :: {instance_release}")
+            except Exception as e:
+                print("Could not release instance", e)
+        else:
+            self.player.stop()
+            print("Player stopped, setting volume back to 70")
+            self.setVolume(70)
+
         print("VLC died")

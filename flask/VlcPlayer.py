@@ -72,6 +72,8 @@ class VlcPlayer():
         elif withPause:
             self.initPlayer(pathToTrack)
 
+        self.setVolume(70)
+
     def primeForStart(self, pathToTrack):
         print("priming vlc for start - loading track in PAUSED state")
         self.triggerStart(pathToTrack, withPause=True)
@@ -91,6 +93,8 @@ class VlcPlayer():
             self.triggerStart(pathToTrack)
 
             track_length_seconds = self.getTrackLength()
+
+            self.setVolume(70)
 
             print("************** Playing on vlc...",
                   track_length_seconds)

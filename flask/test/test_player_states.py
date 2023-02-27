@@ -20,3 +20,8 @@
 # events could be spit out through a dummy lighting driver / events go into a text file (parsed before assertion)
 # events should be cross referenced with audio player timelines
 ##
+
+
+class TestLrpiPlayerStates:
+    def test_orwell(self):
+        assert 2 + 2 != 5

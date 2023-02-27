@@ -165,7 +165,12 @@ class GetTrackList(Resource):
         global BUILT_PATH
         global player
 
-        MEDIA_BASE_PATH = settings.get_combined_settings()["media_base_path"]
+        MEDIA_BASE_PATH = loadSettings()["media_base_path"]
+
+        print(f"GetTrackList MBP :: {MEDIA_BASE_PATH}")
+
+        print("GetTrackList")
+        print(os.environ["LRPI_SETTINGS_PATH"])
 
         try:
 
@@ -187,7 +192,7 @@ class GetTrackList(Resource):
             if BUILT_PATH is None:
                 BUILT_PATH = MEDIA_BASE_PATH
 
-            # print('BUILT_PATH init: ' + str(BUILT_PATH))
+            print('BUILT_PATH init: ' + str(BUILT_PATH))
 
             args = {}
 
@@ -523,7 +528,8 @@ api.add_resource(Command, '/command')  # POST
 # Scentroom specific endpoints
 api.add_resource(ScentRoomTrigger, '/scentroom-trigger')  # POST
 
-if __name__ == '__main__':
+
+def startServer():
     settings_json = settings.get_settings()
     use_reloader = False
     print("*" * 30)
@@ -531,3 +537,13 @@ if __name__ == '__main__':
     print("*" * 30)
     app.run(use_reloader=use_reloader, debug=settings_json["debug"], port=os.environ.get(
         "PORT", "8686"), host='0.0.0.0')
+
+
+def appFactory():
+    print("In app factory")
+    print(os.environ["LRPI_SETTINGS_PATH"])
+    return app
+
+
+if __name__ == '__main__':
+    startServer()

@@ -43,6 +43,7 @@ class VlcPlayer():
 
         print(f"initPlayer: Setting media to {pathToTrack}")
         media = self.instance.media_new(pathToTrack)
+        self.sourcePath = pathToTrack
         self.player.set_media(media)
         audio_output_device = self.getAudioOutput(settings.get_settings())
         self.setOutputDevice(audio_output_device)
@@ -198,6 +199,7 @@ class VlcPlayer():
 
     def stop(self):
         print("Stopping...")
+        self.player.stop()
 
     def crossfade(self, nextTrack):
         print("Crossfading...")

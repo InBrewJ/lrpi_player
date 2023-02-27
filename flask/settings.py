@@ -2,11 +2,6 @@ import os
 import json
 
 _SETTINGS = None
-# TODO: make this an env var
-# SETTINGS_PATH = "/media/usb/settings.json"
-# SETTINGS_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/settings.json"
-SETTINGS_PATH = os.environ.get(
-    "LRPI_SETTINGS_PATH", "/media/usb/settings.json")
 
 # when usb stick is not installed, start with:
 # sudo LRPI_SETTINGS_PATH=/home/inbrewj/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
@@ -15,16 +10,27 @@ SETTINGS_PATH = os.environ.get(
 # on, e.g. a Pi running Raspbian Lite (the tempcube)
 # sudo LRPI_SETTINGS_PATH=~/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
 
-print(f"SETTINGS_PATH :: {SETTINGS_PATH}")
+
+def get_settings_path():
+
+    # when usb stick is not installed (e.g. unit tests), start with:
+    # sudo LRPI_SETTINGS_PATH=/home/inbrewj/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
+
+    SETTINGS_PATH = os.environ.get(
+        "LRPI_SETTINGS_PATH", "/media/usb/settings.json")
+
+    return SETTINGS_PATH
 
 
 def get_settings():
 
+    print(f"SETTINGS_PATH in get_settings :: {get_settings_path()}")
+
     global _SETTINGS
 
     if _SETTINGS is None:
-        if os.path.exists(SETTINGS_PATH):
-            with open(SETTINGS_PATH) as f:
+        if os.path.exists(get_settings_path()):
+            with open(get_settings_path()) as f:
                 _SETTINGS = get_combined_settings()
 
     return _SETTINGS
@@ -55,10 +61,13 @@ def get_combined_settings():
 
 def get_json_settings():
 
-    if os.path.exists(SETTINGS_PATH):
-        with open(SETTINGS_PATH) as f:
+    print(
+        f"Opening settings file from json settings path :: {get_settings_path()}")
+
+    if os.path.exists(get_settings_path()):
+        with open(get_settings_path()) as f:
             return json.loads(f.read())
-    return None
+    return {}
 
 
 def get_evn_settings():

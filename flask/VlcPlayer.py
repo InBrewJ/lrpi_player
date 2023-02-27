@@ -19,7 +19,7 @@ class VlcPlayer():
         self.masterIp = ""
         self.sourcePath = ""
         settings_json = settings.get_settings()
-        # todo: uncomment!
+        # TODO BANANA: uncomment!
         # self.initialVolumeFromSettings: int = settings_json["audio_volume"]
         self.initialVolumeFromSettings: int = 70
 

@@ -18,6 +18,10 @@ class VlcPlayer():
         self.paired = False
         self.masterIp = ""
         self.sourcePath = ""
+        settings_json = settings.get_settings()
+        # todo: uncomment!
+        # self.initialVolumeFromSettings: int = settings_json["audio_volume"]
+        self.initialVolumeFromSettings: int = 70
 
     def getAudioOutput(self, settings_json):
         # lrpi_player#105
@@ -45,14 +49,15 @@ class VlcPlayer():
         media = self.instance.media_new(pathToTrack)
         self.sourcePath = pathToTrack
         self.player.set_media(media)
+
+        # This audio device setting function doesn't seem to
+        # work as expected...
         audio_output_device = self.getAudioOutput(settings.get_settings())
-        self.setOutputDevice(audio_output_device)
-        print(f"initPlayer: Setting volume to {70}")
-        sleep(0.5)
-        self.setVolume(70)
+        # self.setOutputDevice(audio_output_device)
+        # sleep(0.5)
 
     def getTrackLength(self):
-        sleep(0.3)
+        sleep(0.1)
         length_from_vlc = self.player.get_length() / 1000
         if length_from_vlc < 0:
             return 0
@@ -67,13 +72,10 @@ class VlcPlayer():
         return self.player.audio_set_volume(value_0_to_100)
 
     def triggerStart(self, pathToTrack, withPause=False):
-        if not withPause:
-            self.initPlayer(pathToTrack)
-            self.player.play()
-        elif withPause:
-            self.initPlayer(pathToTrack)
+        self.initPlayer(pathToTrack)
 
-        self.setVolume(70)
+        if not withPause:
+            self.player.play()
 
     def primeForStart(self, pathToTrack):
         print("priming vlc for start - loading track in PAUSED state")
@@ -95,7 +97,9 @@ class VlcPlayer():
 
             track_length_seconds = self.getTrackLength()
 
-            self.setVolume(70)
+            # For whatever reason, audio_set_volume
+            # will only work after the track has been playing for some short time
+            self.setVolume(self.initialVolumeFromSettings)
 
             print("************** Playing on vlc...",
                   track_length_seconds)
@@ -122,17 +126,22 @@ class VlcPlayer():
                 if self.player.get_state() == State.Paused:
                     frontend_friendly_status = "Paused"
 
-                if self.player.get_state() == State.Stopped:
-                    frontend_friendly_status = "Stopped"
+                # with the current frontend, the status must be the empty
+                # string for the 'back' button to correctly navigate to the
+                # track list
+                #
+                # if self.player.get_state() == State.Stopped:
+                #     frontend_friendly_status = "Stopped"
 
                 status["source"] = self.sourcePath
                 status["playerState"] = frontend_friendly_status
                 status["canControl"] = True
-                status["position"] = self.player.get_time() / 1000
+                status["position"] = self.getPosition()
                 status["trackDuration"] = self.getTrackLength()
                 status["error"] = ""
                 status["paired"] = self.paired
                 status["master_ip"] = self.masterIp
+                status["volume"] = self.getVolume()
             except Exception as e:
                 status["playerState"] = "UNKNOWN"
                 status["canControl"] = False
@@ -174,7 +183,7 @@ class VlcPlayer():
 
         print(f"After playPause, source :: {str(self.player.get_media())}")
 
-        return self.player.get_length() / 1000
+        return self.getTrackLength()
 
     def setPaired(self, val, masterIp):
         self.paired = val
@@ -265,6 +274,6 @@ class VlcPlayer():
         else:
             self.player.stop()
             print("Player stopped, setting volume back to 70")
-            self.setVolume(70)
+            self.setVolume(self.initialVolumeFromSettings)
 
         print("VLC died")

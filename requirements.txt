@@ -5,12 +5,12 @@ flask-cors>=3.0.7
 Flask-RESTful>=0.3.7
 Flask-Jsonpify>=1.5.0
 flask-inputs>=0.3.0
-python-vlc==3.0.4106
+python-vlc==3.0.18121
 # omxplayer-wrapper==0.3.2
 requests==2.21.0
 tinkerforge==2.1.20
 pysrt==1.1.1
-numpy==1.15.4
+numpy
 apscheduler==3.5.3
 keyboard==0.13.2
 ntplib>=0.3.3

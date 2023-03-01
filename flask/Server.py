@@ -30,7 +30,7 @@ from flask import Flask, request, send_from_directory, render_template
 from os.path import splitext
 import os
 import os.path
-os.environ["FLASK_ENV"] = "development"
+# os.environ["FLASK_ENV"] = "development"
 
 print("LushRooms player starting!")
 
@@ -41,7 +41,7 @@ mpegOnly = False
 allFormats = True
 useNTP = True
 
-app = Flask(__name__,  static_folder='static')
+app = Flask(__name__,  static_url_path='')
 api = Api(app)
 CORS(app)
 
@@ -135,17 +135,6 @@ def timing(f):
 
         return ret
     return wrap
-
-# serve the angular app
-
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists("static/" + path):
-        return send_from_directory('static/', path)
-    else:
-        return send_from_directory('static/', 'index.html')
 
 # API endpoints
 
@@ -506,7 +495,23 @@ class ScentRoomTrigger(Resource):
         else:
             return jsonify({'response': 500, 'description': 'not ok!', "error": "Incorrect body format"})
 
-# URLs are defined here
+# serve the angular app
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists("static/" + path):
+        return send_from_directory('static/', path)
+    else:
+        return send_from_directory('static/', 'index.html')
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory('static/', 'index.html')
+
+# Player controller routes
 
 
 api.add_resource(GetTrackList, '/get-track-list')

@@ -122,6 +122,10 @@ class VlcPlayer():
             # will only work after the track has been playing for some short time
             self.setDefaultVolumeFromSettings()
 
+            # Master will have been primed?
+            if master:
+                self.player.play()
+
             print("************** Playing on vlc...",
                   track_length_seconds)
 

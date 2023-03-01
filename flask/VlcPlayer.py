@@ -43,7 +43,29 @@ class VlcPlayer():
         self.player.audio_output_device_set(
             None, device_id)
 
-    def initPlayer(self, pathToTrack):
+    def vlcGymnastics(self):
+        print("______Doing VLC gymnastics")
+        print("______Setting volume to zero")
+        self.setVolume(0)
+        print("______Playing")
+        self.player.play()
+
+        wait_to_get_track_info_seconds = 2
+        print(f"______sleeping for {wait_to_get_track_info_seconds}")
+        sleep(wait_to_get_track_info_seconds)
+
+        # pause, go back to the beginning,
+        # set the volume back to something audible
+        print("______Pausing")
+        self.player.pause()
+        print("______going back to beginning")
+        self.player.set_position(0.0)
+        print("______sleeping")
+        sleep(1)
+        print("______setting volume to settings")
+        self.setDefaultVolumeFromSettings()
+
+    def initPlayer(self, pathToTrack, withVlcGymnastics=False):
         # todo - set volume via settings.json!
         # settings_json = settings.get_settings()
         # output_route = settings_json.get("audio_output")
@@ -52,6 +74,9 @@ class VlcPlayer():
         media = self.instance.media_new(pathToTrack)
         self.sourcePath = pathToTrack
         self.player.set_media(media)
+
+        if withVlcGymnastics:
+            self.vlcGymnastics()
 
         # This audio device setting function doesn't seem to
         # work as expected...
@@ -76,7 +101,8 @@ class VlcPlayer():
         return self.setVolume(self.initialVolumeFromSettings)
 
     def triggerStart(self, pathToTrack, withPause=False):
-        self.initPlayer(pathToTrack)
+        withVlcGymnastics = withPause
+        self.initPlayer(pathToTrack, withVlcGymnastics)
 
         if not withPause:
             self.player.play()
@@ -97,9 +123,10 @@ class VlcPlayer():
             pause.until(syncTimestamp)
 
     def start(self, pathToTrack, syncTimestamp=None, master=False):
+        print(f"************* IN VLC START: master = {master}")
         try:
-
             if not master:
+                print("_____NOT MASTER, STOPPING PLAYER")
                 if self.player:
                     self.stop()
 
@@ -107,14 +134,13 @@ class VlcPlayer():
 
             self.pauseIfSync(syncTimestamp)
 
-            self.triggerStart(pathToTrack)
+            if not master:
+                print("_____NOT MASTER, TRIGGERING START (no gymnastics)")
+                self.triggerStart(pathToTrack)
+                sleep(0.2)
 
             # pause here if we HAVEN'T primed for a start
             # slave nodes do not prime
-
-            print(f"************* IN VLC START: master = {master}")
-
-            sleep(0.2)
 
             track_length_seconds = self.getTrackLength()
 
@@ -124,12 +150,12 @@ class VlcPlayer():
 
             # Master will have been primed?
             if master:
+                print(f"************* MASTER IS STARTING AFTER BEING PAUSED")
                 self.player.play()
 
             print("************** Playing on vlc...",
                   track_length_seconds)
 
-            print(f"************** at volume {self.getVolume()}")
             return track_length_seconds
         except Exception as e:
             print("ERROR: Could not start player... but audio may still be playing!")

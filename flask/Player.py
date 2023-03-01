@@ -33,6 +33,9 @@ else:
     from VlcPlayer import VlcPlayer
 
 
+# todo:
+# VlcPlayer should also be singleton?
+
 class LushRoomsPlayer():
     def __init__(self, playlist, basePath):
         # TODO BANANA: arch will differ here
@@ -53,7 +56,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 5.0  # seconds
+        self.slaveCommandOffset = 1.5  # seconds
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -110,8 +113,9 @@ class LushRoomsPlayer():
             print('Slave: Syncing start!')
 
         if self.isMaster():
-            print('Master, sending start!')
+            print(f'Master :: priming master player with track {path}')
             self.player.primeForStart(path)
+            print('Master :: sending start command!')
             syncTime = self.sendSlaveCommand('start')
 
         self.started = True

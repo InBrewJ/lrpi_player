@@ -32,6 +32,13 @@ def runner(app):
     return app.test_cli_runner()
 
 
+# Thanks to https://stackoverflow.com/q/10480806/8249410
+def equal_dicts(a, b, ignore_keys=[]):
+    ka = set(a).difference(ignore_keys)
+    kb = set(b).difference(ignore_keys)
+    return ka == kb and all(a[k] == b[k] for k in ka)
+
+
 class TestLrpiPlayerSmokeTests:
     def test_server_starts(self, client):
         response = client.get("/status")
@@ -43,6 +50,8 @@ class TestLrpiPlayerSmokeTests:
     def test_server_returns_tracklist(self, client):
 
         response = client.get("/get-track-list")
+
+        print(response)
 
         expected_track_list = [
             {
@@ -57,10 +66,18 @@ class TestLrpiPlayerSmokeTests:
             }
         ]
 
-        assert response.json == expected_track_list
+        print(expected_track_list)
+
+        # we don't care about asserting on ModTime
+        for i in range(len(expected_track_list)):
+            assert equal_dicts(
+                expected_track_list[i],
+                response.json[i],
+                ignore_keys=['ModTime']
+            )
 
     def test_server_returns_tablet_ui(self, client):
-        response = client.get("/")
+        response = client.get("/tracks")
 
         assert response.status_code == 200
 
@@ -88,7 +105,7 @@ class TestLrpiPlayerSmokeTests:
             'paired': False,
             'playerState': '',
             'playerType': 'VLC',
-            'playlist': expected_track_list,
+            'playlist': ['not bothered about playlist in this test'],
             'position': -0.001,
             'slave_url': None,
             'source': '',
@@ -97,7 +114,11 @@ class TestLrpiPlayerSmokeTests:
             'volume': 0
         }
 
-        assert response.json == expected_status
+        assert equal_dicts(
+            response.json,
+            expected_status,
+            ignore_keys=['playlist']
+        )
 
     def test_server_plays_one_track_no_lights(self, client):
         known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"

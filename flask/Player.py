@@ -53,7 +53,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 3.0  # seconds
+        self.slaveCommandOffset = 5.0  # seconds
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -77,14 +77,16 @@ class LushRoomsPlayer():
     def isMaster(self):
         print("isMaster", self.player.paired, self.status["master_ip"], self.player.paired and (
             self.status["master_ip"] is None))
+        # should this be based on "slave_ip" instead?
         return self.player.paired and (self.status["master_ip"] is None)
 
     def isSlave(self):
         print("isSlave", self.player.paired, self.status["master_ip"], self.player.paired and (
             self.status["master_ip"] is None))
+
         return self.player.paired and (self.status["master_ip"] is not None)
 
-    # Returns the current position in seconds
+    # Returns the track_length_seconds
     def start(self, path, subs, subsPath, syncTime=None):
         self.player.status(self.status)
         self.status["source"] = path
@@ -113,15 +115,15 @@ class LushRoomsPlayer():
             syncTime = self.sendSlaveCommand('start')
 
         self.started = True
-        response = self.player.start(path, syncTime, self.isMaster())
+        track_length_seconds = self.player.start(
+            path, syncTime, self.isMaster())
 
         try:
-            print('In Player: ', id(self.player))
             self.lighting.start(self.player, subs)
         except Exception as e:
             print('Lighting failed: ', e)
 
-        return response
+        return track_length_seconds
 
     def playPause(self, syncTime=None):
 
@@ -197,6 +199,8 @@ class LushRoomsPlayer():
                 sleep(sleepPerStep)
 
         # Nominally for VLC
+        # This forces the volume to be audible
+        # when the next track starts playing
 
         self.player.mute()
         self.player.pause()
@@ -248,6 +252,7 @@ class LushRoomsPlayer():
 
         else:
             print(hostname, 'is down! Cannot pair!')
+            return 1
 
         return 0
 
@@ -333,14 +338,6 @@ class LushRoomsPlayer():
             print('sending command to slave: ', command)
             # c = ntplib.NTPClient()
             try:
-                # tx_time is a unix timestamp
-                # this, among a few other things, means 'party mode'
-                # is only available on the 'Pi'/other unix like systems
-                # response = c.request(NTP_SERVER, version=3)
-                # print('\n' + 30*'-')
-                # print('ntp time: ', ctime(response.tx_time))
-                # print('ntp time raw: ', response.tx_time)
-                # print(30*'-' + '\n')
 
                 localTimestamp = calendar.timegm(
                     datetime.datetime.now().timetuple())

@@ -6,6 +6,10 @@ from time import ctime
 import pause  # pylint: disable=import-error
 import settings
 
+# todo:
+# create singleton for vlc.Instance
+# there should only ever be one, no exceptions!
+
 
 # Useful vlc binding docs
 # http://www.olivieraubert.net/vlc/python-ctypes/doc/vlc.MediaPlayer-class.html
@@ -56,7 +60,6 @@ class VlcPlayer():
         # sleep(0.5)
 
     def getTrackLength(self):
-        sleep(0.2)
         length_from_vlc = self.player.get_length() / 1000
         if length_from_vlc < 0:
             return 0
@@ -84,19 +87,34 @@ class VlcPlayer():
         print("priming vlc for start - loading track in PAUSED state")
         self.triggerStart(pathToTrack, withPause=True)
 
+    def pauseIfSync(self, syncTimestamp=None):
+        print('synctime in vlcplayer: ', ctime(syncTimestamp))
+        if syncTimestamp:
+            print("*" * 30)
+            print("** syncTimestamp found for pairing mode!")
+            print(f"Pausing next vlc command until {ctime(syncTimestamp)}")
+            print("*" * 30)
+            pause.until(syncTimestamp)
+
     def start(self, pathToTrack, syncTimestamp=None, master=False):
         try:
 
-            print('synctime in vlcplayer: ', ctime(syncTimestamp))
-            if syncTimestamp:
-                print(f"Pausing start until {syncTimestamp}")
-                pause.until(syncTimestamp)
-
             if not master:
                 if self.player:
-                    self.player.stop()
+                    self.stop()
+
+            print('synctime in vlcplayer: ', ctime(syncTimestamp))
+
+            self.pauseIfSync(syncTimestamp)
 
             self.triggerStart(pathToTrack)
+
+            # pause here if we HAVEN'T primed for a start
+            # slave nodes do not prime
+
+            print(f"************* IN VLC START: master = {master}")
+
+            sleep(0.2)
 
             track_length_seconds = self.getTrackLength()
 
@@ -177,14 +195,11 @@ class VlcPlayer():
             self.player.pause()
 
     def playPause(self, syncTimestamp=None):
-        print("Playpausing...", self.getTrackLength())
+        print("Playpausing...")
 
-        if syncTimestamp:
-            pause.until(syncTimestamp)
+        self.pauseIfSync(syncTimestamp)
 
         self.playPauseToggler()
-
-        print(f"After playPause, source :: {str(self.player.get_media())}")
 
         return self.getTrackLength()
 
@@ -198,8 +213,7 @@ class VlcPlayer():
         return self.player.get_time() / 1000
 
     def seek(self, position0_to_100, syncTimestamp=None):
-        if syncTimestamp:
-            pause.until(syncTimestamp)
+        self.pauseIfSync(syncTimestamp)
 
         position0_to_1 = float(position0_to_100) / 100
         print(f"Telling vlc player to seek to {position0_to_1}")
@@ -250,6 +264,9 @@ class VlcPlayer():
             return True
 
     def exit(self, syncTimestamp=None):
+
+        self.pauseIfSync(syncTimestamp)
+
         if self.player:
             print("Stopping VLC")
             self.player.stop()

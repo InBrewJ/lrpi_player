@@ -161,5 +161,6 @@ class TestLrpiPlayerSmokeTests:
         assert status_response['playerState'] == 'Playing'
         assert status_response['trackDuration'] == 187.11
         assert status_response['position'] > 0
-        assert status_response['volume'] == 70
+        # 80 is set in flask/test/pytest_faux_usb/settings.json
+        assert status_response['volume'] == 80
         assert "ff-16b-2c-folder2.mp4" in status_response['source']

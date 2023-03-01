@@ -19,9 +19,8 @@ class VlcPlayer():
         self.masterIp = ""
         self.sourcePath = ""
         settings_json = settings.get_settings()
-        # TODO BANANA: uncomment!
-        # self.initialVolumeFromSettings: int = settings_json["audio_volume"]
-        self.initialVolumeFromSettings: int = 70
+        self.initialVolumeFromSettings: int = int(
+            settings_json["audio_volume"])
 
     def getAudioOutput(self, settings_json):
         # lrpi_player#105
@@ -57,25 +56,29 @@ class VlcPlayer():
         # sleep(0.5)
 
     def getTrackLength(self):
-        sleep(0.1)
+        sleep(0.2)
         length_from_vlc = self.player.get_length() / 1000
         if length_from_vlc < 0:
             return 0
         else:
             return length_from_vlc
 
-    def getVolume(self):
-        return self.player.audio_get_volume()
-
     def setVolume(self, value_0_to_100):
         print(f"setVolume: Setting volume to {value_0_to_100}")
         return self.player.audio_set_volume(value_0_to_100)
+
+    def setDefaultVolumeFromSettings(self):
+        print(
+            f"setDefaultVolumeFromSettings: Setting volume to {self.initialVolumeFromSettings}")
+        return self.setVolume(self.initialVolumeFromSettings)
 
     def triggerStart(self, pathToTrack, withPause=False):
         self.initPlayer(pathToTrack)
 
         if not withPause:
             self.player.play()
+
+        self.setDefaultVolumeFromSettings()
 
     def primeForStart(self, pathToTrack):
         print("priming vlc for start - loading track in PAUSED state")
@@ -99,7 +102,7 @@ class VlcPlayer():
 
             # For whatever reason, audio_set_volume
             # will only work after the track has been playing for some short time
-            self.setVolume(self.initialVolumeFromSettings)
+            self.setDefaultVolumeFromSettings()
 
             print("************** Playing on vlc...",
                   track_length_seconds)
@@ -174,7 +177,7 @@ class VlcPlayer():
             self.player.pause()
 
     def playPause(self, syncTimestamp=None):
-        print("Playpausing...", self.player.get_length() / 1000)
+        print("Playpausing...", self.getTrackLength())
 
         if syncTimestamp:
             pause.until(syncTimestamp)
@@ -198,9 +201,9 @@ class VlcPlayer():
         if syncTimestamp:
             pause.until(syncTimestamp)
 
-        to_0_to_1 = float(position0_to_100) / 100
-        print(f"Telling vlc player to seek to {to_0_to_1}")
-        self.player.set_position(to_0_to_1)
+        position0_to_1 = float(position0_to_100) / 100
+        print(f"Telling vlc player to seek to {position0_to_1}")
+        self.player.set_position(position0_to_1)
         return self.getPosition()
 
     def pause(self):
@@ -210,33 +213,31 @@ class VlcPlayer():
         print("Stopping...")
         self.player.stop()
 
-    def crossfade(self, nextTrack):
-        print("Crossfading...")
-
-    def next(self):
-        print("Skipping forward...")
-
-    def previous(self):
-        print("Skipping back...")
-
     def mute(self):
-        print(self.player.audio_get_volume())
+        print("Muting...")
         self.player.audio_set_volume(0)
 
+    def getVolume(self):
+        return self.player.audio_get_volume()
+
     def volumeUp(self):
-        self.player.audio_set_volume(self.player.audio_get_volume() + 10)
+        self.player.audio_set_volume(self.player.audio_get_volume() + 5)
 
     def volumeDown(self, interval):
-        start_volume = 80
-        step = int(int(start_volume / int(interval)) / 4)
+        idealStepSize = 2
 
-        current_volume = self.player.audio_get_volume()
+        start_volume = self.player.audio_get_volume()
+
+        step = idealStepSize
+
+        current_volume = start_volume
 
         print("vlc downer: ", str(current_volume))
         # Vlc volume is between 0 and 100
         # below 10 is barely audible, ready for crossfading!
-        if (current_volume <= 7 or interval == 0):
+        if (current_volume <= 5 or interval == 0):
             # False =  we can't lower the volume anymore
+            # False - no interval is specified, skip ahead now
             return False
         else:
             print(
@@ -252,7 +253,8 @@ class VlcPlayer():
         if self.player:
             print("Stopping VLC")
             self.player.stop()
-            self.__del__()
+            self.setVolume(self.initialVolumeFromSettings)
+            # self.__del__()
         else:
             return 1
 

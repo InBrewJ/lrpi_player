@@ -188,9 +188,21 @@ class LushRoomsPlayer():
             pause.until(syncTimestamp)
 
         if interval > 0:
+            playerVolumeNow = self.player.getVolume()
+            idealStepSize = 2
+            stepsNeeded = playerVolumeNow / idealStepSize
+            sleepPerStep = interval / stepsNeeded
             while self.player.volumeDown(interval):
-                # if interval is 4 seconds here, we'll get a sleep of 0.25 secs
-                sleep(1.0/interval)
+                print(f"sleeping for {sleepPerStep}s until next volumeDown")
+                sleep(sleepPerStep)
+
+        # Nominally for VLC
+
+        self.player.mute()
+        self.player.pause()
+        self.player.setDefaultVolumeFromSettings()
+
+        sleep(0.2)
 
         self.player.exit()
         self.lighting.exit()

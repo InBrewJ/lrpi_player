@@ -66,10 +66,6 @@ NEW_SRT_ARRAY = []
 player = None
 paused = None
 
-
-# killOmx as soon as the server starts...
-# killOmx()
-
 # utils
 
 # Kill omx processes on a ctrl+c/program closure
@@ -273,7 +269,7 @@ class PlayPause(Resource):
         return jsonify(duration)
 
 
-class FadeDown(Resource):
+class FadeDownPlayNext(Resource):
     def get(self):
         global player
         global BUILT_PATH
@@ -517,7 +513,7 @@ def not_found(e):
 api.add_resource(GetTrackList, '/get-track-list')
 api.add_resource(PlaySingleTrack, '/play-single-track')
 api.add_resource(PlayPause, '/play-pause')
-api.add_resource(FadeDown, '/crossfade')
+api.add_resource(FadeDownPlayNext, '/crossfade')
 api.add_resource(Seek, '/seek')
 api.add_resource(Stop, '/stop')
 api.add_resource(GetSettings, '/settings')

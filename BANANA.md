@@ -10,4 +10,4 @@ In the code, see `# TODO BANANA: <a note>`
   - If we favour vlc (or something else) - the lrpi_base image needs to change
 - If we don't ensure backwards compatibility with Rpi3, this becomes a hard fork
   - Although we can branch in the software if we maintain two testbeds
-- NOTE that CD via Github and dockerhub means that if a new image is pushed to latest, all Pis will pull that image at 4am and potentially break the next day. We should be careful here
+- NOTE that CD via Github and dockerhub means that if a new image is pushed to latest, all Pis will pull that image at 4am and potentially break the next day. We should be VVV CAREFUL here

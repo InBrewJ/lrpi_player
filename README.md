@@ -93,7 +93,7 @@ lushdigital/lushroom-player:staging
 In Spa mode:
 
 ```
-sudo docker run -it --rm -p 80:80 \
+sudo docker run -it --rm -p 8686:80 \
 -v /home/lush/lrpi_player/flask:/opt/code/flask \
 -v /opt/vc:/opt/vc \
 -v /media/usb:/media/usb \
@@ -109,4 +109,10 @@ Run a bash terminal for in depth debugging:
 ```
 docker run -it --rm -p 80:80 -v /opt/vc:/opt/vc -v /media/usb:/media/usb --device /dev/vchiq:/dev/vchiq --device /dev/fb0:/dev/fb0 --entrypoint "/bin/bash" lushdigital/lushroom-player:staging
 
+```
+
+On Rpi4 (32 bit, Lumicube edition)
+
+```
+docker run -it --rm -p 8686:8686 -v /opt/vc:/opt/vc -v /media/usb:/media/usb --env LRPI_SETTINGS_PATH=/media/usb/settings.json --device /dev/vchiq:/dev/vchiq --name lrpi-player-rpi4 --entrypoint "/bin/bash" lushroom-player-rpi4
 ```

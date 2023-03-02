@@ -40,6 +40,15 @@ class VlcPlayer():
 
     def setOutputDevice(self, device_id):
         print(f"Setting VLC audio output to {device_id}")
+
+        # something related to this:
+        # https://raspberrypi.stackexchange.com/a/127517
+        #
+        # test on command line first!
+        #
+        # host of resources here, too
+        # https://elinux.org/New_Pi_OS_sound_trouble_shooting
+
         self.vlcPlayer.audio_output_device_set(
             None, device_id)
 

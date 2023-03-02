@@ -87,5 +87,5 @@ def get_evn_settings():
     settings["audio_volume"] = int(os.environ.get("AUDIO_VOLUME", "100"))
     settings["audio_output"] = os.environ.get("AUDIO_OUPUT", "hdmi")
     settings["media_base_path"] = os.environ.get(
-        "MEDIA_BASE_PATH", "/media/usb/tracks")
+        "MEDIA_BASE_PATH", "/media/usb/tracks/")
     return settings

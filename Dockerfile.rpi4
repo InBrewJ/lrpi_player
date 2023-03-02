@@ -3,7 +3,12 @@
 
 # get base image (based itself on a resin image). Has QEMU built in
 
-FROM balenalib/raspberrypi4-64-debian-python:3.9
+# I don't have a 64 bit OS on my Pi4s
+# Find 32 / 64 with:
+# $ getconf LONG_BIT
+# FROM balenalib/raspberrypi4-64-debian-python:3.9
+
+FROM balenalib/raspberrypi3-debian:bullseye
 
 RUN [ "cross-build-start" ]
 
@@ -28,6 +33,7 @@ RUN sudo apt-get install libatlas-base-dev psmisc
 
 COPY flask /opt/code/flask
 COPY requirements.txt /opt/code/requirements.txt
+# commented out because it's failing for whatever reason under cross-build-end
 RUN pip3 install -r /opt/code/requirements.txt
 
 # serve Flask from 80

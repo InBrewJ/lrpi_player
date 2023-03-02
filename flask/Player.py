@@ -16,6 +16,7 @@ from pysrt import stream as srtstream
 import datetime
 import calendar
 import json
+from threading import Thread
 
 # utils
 
@@ -56,7 +57,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 1.5  # seconds
+        self.slaveCommandOffset = 2.7  # seconds
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -108,19 +109,23 @@ class LushRoomsPlayer():
             print("Total time elapsed: " +
                   str(end_time - start_time) + " seconds")
 
-        if self.isSlave():
-            # wait until the sync time to fire everything off
-            print('Slave: Syncing start!')
-
         if self.isMaster():
+            # if the command is 'start' we need to prime both players
+            # so that we can simply press 'play' on the track
+            # this ensures that tracks start at as close to the same
+            # time as possible, minimising the 'springhall reverb' effect
+
             print(f'Master :: priming master player with track {path}')
             self.player.primeForStart(path)
+            print(f'Master :: priming slave player with track {path}')
+            self.sendSlaveCommand('primeForStart')
             print('Master :: sending start command!')
             syncTime = self.sendSlaveCommand('start')
+            self.pauseIfSync(syncTime)
 
         self.started = True
         track_length_seconds = self.player.start(
-            path, syncTime, self.isMaster())
+            path, syncTime, self.isMaster(), self.isSlave())
 
         try:
             self.lighting.start(self.player, subs)
@@ -134,6 +139,7 @@ class LushRoomsPlayer():
         if self.isMaster():
             print('Master, sending playPause!')
             syncTime = self.sendSlaveCommand('playPause')
+            self.pauseIfSync(syncTime)
 
         response = self.player.playPause(syncTime)
 
@@ -152,6 +158,7 @@ class LushRoomsPlayer():
             if self.isMaster():
                 print('Master, sending stop!')
                 syncTime = self.sendSlaveCommand('stop')
+                self.pauseIfSync(syncTime)
 
             self.lighting.exit()
             self.player.exit(syncTime)
@@ -186,7 +193,7 @@ class LushRoomsPlayer():
         if self.isMaster():
             print('Master, sending fadeDown!')
             syncTime = self.sendSlaveCommand('fadeDown')
-            pause.until(syncTime)
+            self.pauseIfSync(syncTime)
 
         if syncTimestamp and self.isSlave():
             # this code is only called when isSlave is True?
@@ -202,7 +209,7 @@ class LushRoomsPlayer():
                 print(f"sleeping for {sleepPerStep}s until next volumeDown")
                 sleep(sleepPerStep)
 
-        # Nominally for VLC
+        # VLC gymnastics
         # This forces the volume to be audible
         # when the next track starts playing
 
@@ -227,6 +234,7 @@ class LushRoomsPlayer():
             if self.isMaster():
                 print('Master, sending seek!')
                 syncTime = self.sendSlaveCommand('seek', position)
+                self.pauseIfSync(syncTime)
 
             newPos = self.player.seek(position, syncTimestamp)
             self.lighting.seek(newPos)
@@ -290,6 +298,16 @@ class LushRoomsPlayer():
     # When this player is enslaved, map the status of the
     # master to a method
 
+    def pauseIfSync(self, syncTimestamp=None):
+        print('synctime in LushRoomsPlayer: ', ctime(syncTimestamp))
+        if syncTimestamp:
+            print("*" * 30)
+            print("** syncTimestamp found for pairing mode!")
+            print(
+                f"Pausing next LushRoomsPlayer command until {ctime(syncTimestamp)}")
+            print("*" * 30)
+            pause.until(syncTimestamp)
+
     def commandFromMaster(self, masterStatus, command, position, startTime):
         res = 1
         if self.player.paired:
@@ -303,6 +321,16 @@ class LushRoomsPlayer():
                 startTime))
             print("*" * 30)
 
+            # All commands are mutually exclusive
+
+            if command == "primeForStart":
+                pathToTrack = masterStatus["source"]
+                print(
+                    f'Slave :: priming slave player with track {pathToTrack}')
+                self.player.primeForStart(pathToTrack)
+            else:
+                self.pauseIfSync(startTime)
+
             if command == "start":
                 self.start(
                     masterStatus["source"],
@@ -312,20 +340,19 @@ class LushRoomsPlayer():
                 )
 
             if command == "playPause":
-                self.playPause(startTime)
+                self.playPause()
 
             if command == "stop":
-                self.stop(startTime)
+                self.stop()
 
             if command == "seek":
-                self.seek(position, startTime)
+                self.seek(position)
 
             if command == "fadeDown":
                 self.fadeDown(masterStatus["source"],
                               masterStatus["interval"],
                               None,
-                              masterStatus["subsPath"],
-                              startTime)
+                              masterStatus["subsPath"])
             res = 0
 
         else:
@@ -340,7 +367,6 @@ class LushRoomsPlayer():
     def sendSlaveCommand(self, command, position=None):
         if self.player.paired:
             print('sending command to slave: ', command)
-            # c = ntplib.NTPClient()
             try:
 
                 localTimestamp = calendar.timegm(
@@ -362,14 +388,29 @@ class LushRoomsPlayer():
                     'master_status': self.getStatus(),
                     'sync_timestamp': self.eventSyncTime
                 }
-                slaveRes = requests.post(
-                    self.slaveUrl + '/command', json=postFields)
-                print('command from slave, res: ', slaveRes)
+
+                # The slave might take an arbitrary amount of time to complete
+                # the command (e.g. fadeDown, lots of sleeps).
+                # Therefore, start it in a thread
+                # we don't often care about the result
+
+                def slaveRequest():
+                    slaveRes = requests.post(
+                        self.slaveUrl + '/command', json=postFields)
+                    print('command from slave, res: ', slaveRes)
+
+                if command == "primeForStart":
+                    # we only want the primeForStart command to be blocked
+                    # this way we can be absolutely sure that the play button
+                    # on the slave player is ready to be pushed...
+                    slaveRequest()
+                else:
+                    Thread(target=slaveRequest).start()
 
                 return self.eventSyncTime
 
             except Exception as e:
-                print('Could not get ntp time!')
+                print(f'Could not send {command} to slave {self.slaveUrl}')
                 print('Why: ', e)
 
         else:

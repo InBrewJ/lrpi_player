@@ -23,4 +23,4 @@ printf "\n\nDone."
 # again, 8686 is for weird lumicube reasons
 # remember the PORT env var!
 # can be set in the docker-compose / swarm / stack / whatever
-# docker run --rm -d -p 8686:8686 --name lrpi-player-rpi4 lushroom-player-rpi4
+# docker run --rm -d -p 8686:8686 --privileged --name lrpi-player-rpi4 lushroom-player-rpi4

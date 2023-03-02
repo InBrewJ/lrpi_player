@@ -155,7 +155,6 @@ class GetTrackList(Resource):
         print(f"GetTrackList MBP :: {MEDIA_BASE_PATH}")
 
         print("GetTrackList")
-        print(os.environ["LRPI_SETTINGS_PATH"])
 
         try:
 
@@ -542,7 +541,6 @@ def startServer():
 
 def appFactory():
     print("In app factory")
-    print(os.environ["LRPI_SETTINGS_PATH"])
     return app
 
 

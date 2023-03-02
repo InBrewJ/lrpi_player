@@ -49,6 +49,8 @@ class VlcPlayer():
         self.setVolume(0)
         print("______Playing")
         self.vlcPlayer.play()
+        print("______Setting volume to zero (again)")
+        self.setVolume(0)
 
         wait_to_get_track_info_seconds = 1.5
         print(f"______sleeping for {wait_to_get_track_info_seconds}")
@@ -267,7 +269,7 @@ class VlcPlayer():
             # True = the volume is not yet at a minimum
             return True
 
-    def exit(self, syncTimestamp=None):
+    def exit(self):
 
         if self.vlcPlayer:
             print("Stopping VLC")

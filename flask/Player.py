@@ -161,7 +161,7 @@ class LushRoomsPlayer():
                 self.pauseIfSync(syncTime)
 
             self.lighting.exit()
-            self.player.exit(syncTime)
+            self.player.exit()
 
             return 0
         except Exception as e:
@@ -246,24 +246,25 @@ class LushRoomsPlayer():
 
     # Pair methods called by the master
 
-    def pairAsMaster(self, hostname):
-        response = os.system("ping -c 1 " + hostname)
+    def pairAsMaster(self, slaveHostname):
+        response = os.system("ping -c 1 " + slaveHostname)
         if response == 0:
-            print(hostname, 'is up!')
-            self.slaveUrl = "http://" + hostname
+            print(slaveHostname, 'is up!')
+            self.slaveUrl = "http://" + slaveHostname
             print("slaveUrl: ", self.slaveUrl)
             statusRes = urllib.request.urlopen(
                 self.slaveUrl + "/status").read()
             print("status: ", statusRes)
             if statusRes:
-                print('Attempting to enslave: ' + hostname)
+                print('Attempting to enslave: ' + slaveHostname)
                 enslaveRes = urllib.request.urlopen(
                     self.slaveUrl + "/enslave").read()
                 print('res from enslave: ', enslaveRes)
-                self.player.setPaired(True, None)
+                master_ip = None
+                self.player.setPaired(True, master_ip)
 
         else:
-            print(hostname, 'is down! Cannot pair!')
+            print(slaveHostname, 'is down! Cannot pair!')
             return 1
 
         return 0
@@ -295,9 +296,6 @@ class LushRoomsPlayer():
             self.player.exit()
             return 0
 
-    # When this player is enslaved, map the status of the
-    # master to a method
-
     def pauseIfSync(self, syncTimestamp=None):
         print('synctime in LushRoomsPlayer: ', ctime(syncTimestamp))
         if syncTimestamp:
@@ -307,6 +305,9 @@ class LushRoomsPlayer():
                 f"Pausing next LushRoomsPlayer command until {ctime(syncTimestamp)}")
             print("*" * 30)
             pause.until(syncTimestamp)
+
+    # When this player is enslaved, map the status of the
+    # master to a method
 
     def commandFromMaster(self, masterStatus, command, position, startTime):
         res = 1
@@ -362,7 +363,7 @@ class LushRoomsPlayer():
         return res
 
     # When this player is acting as master, send commands to
-    # the slave with a 'start' timestamp
+    # the slave with an 'eventSyncTime' timestamp
 
     def sendSlaveCommand(self, command, position=None):
         if self.player.paired:
@@ -389,22 +390,21 @@ class LushRoomsPlayer():
                     'sync_timestamp': self.eventSyncTime
                 }
 
-                # The slave might take an arbitrary amount of time to complete
-                # the command (e.g. fadeDown, lots of sleeps).
-                # Therefore, start it in a thread
-                # we don't often care about the result
-
                 def slaveRequest():
                     slaveRes = requests.post(
                         self.slaveUrl + '/command', json=postFields)
                     print('command from slave, res: ', slaveRes)
 
                 if command == "primeForStart":
-                    # we only want the primeForStart command to be blocked
-                    # this way we can be absolutely sure that the play button
+                    # we only want the primeForStart command to be blocking.
+                    # This way we can be absolutely sure that the play button
                     # on the slave player is ready to be pushed...
                     slaveRequest()
                 else:
+                    # The slave might take an arbitrary amount of time to complete
+                    # the command (e.g. fadeDown, lots of sleeps).
+                    # Therefore, start it in a thread
+                    # we don't often care about the result
                     Thread(target=slaveRequest).start()
 
                 return self.eventSyncTime

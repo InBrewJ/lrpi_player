@@ -215,7 +215,13 @@ class LushRoomsPlayer():
 
         self.player.mute()
         self.player.pause()
-        self.player.setDefaultVolumeFromSettings()
+
+        # Only set the volume back to the original value from
+        # settings if the next track doesn't require both
+        # master and slave to be primed. Setting the volume
+        # here messes with the vlc gymnastics in VlcPlayer.py
+        if not self.player.paired:
+            self.player.setDefaultVolumeFromSettings()
 
         sleep(0.2)
 
@@ -381,8 +387,6 @@ class LushRoomsPlayer():
                 print("*" * 30)
 
                 # send the event sync time to the slave...
-                # if we don't get a response don't try and trigger the event!
-                self.player.status(self.status)
                 postFields = {
                     'command': str(command),
                     'position': str(position),

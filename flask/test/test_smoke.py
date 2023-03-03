@@ -151,7 +151,7 @@ class TestLrpiPlayerSmokeTests:
         assert status_response['volume'] > 20
         assert "ff-16b-2c-folder2.mp4" in status_response['source']
 
-    def test_server_skip_forward_works(self, client):
+    def test_server_crossfade(self, client):
         known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
         known_track_id = "a4a2ea32026a9a858de80d944a0c7f98"
 

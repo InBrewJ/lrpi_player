@@ -1,23 +1,36 @@
-from os import uname, system
 from time import sleep
 import vlc
 from vlc import State
-from time import ctime
-import pause  # pylint: disable=import-error
 import settings
-
-# todo:
-# create singleton for vlc.Instance
-# there should only ever be one, no exceptions!
-
 
 # Useful vlc binding docs
 # http://www.olivieraubert.net/vlc/python-ctypes/doc/vlc.MediaPlayer-class.html
 
+
+class VlcMediaInstance():
+    _instance = None
+
+    # makes vlc.Instance a bonafide singleton
+    # I'm not sure how the VLC library works under the hood
+    # but, over extended LushRooms Pi usage,
+    # to minimize thousands of 'vlc.Instance()' which may
+    # in turn spawn thousands of processes, make sure only
+    # one vlc.Instance() is created
+    def __init__(self):
+        raise RuntimeError('For safety reasons, call instance() instead')
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            print('Creating new instance')
+            cls._instance = vlc.Instance()
+        return cls._instance
+
+
 class VlcPlayer():
     def __init__(self):
         self.ready = False
-        self.instance = vlc.Instance()
+        self.instance = VlcMediaInstance.instance()
         self.vlcPlayer = self.instance.media_player_new()
         self.paired = False
         self.masterIp = ""
@@ -65,23 +78,20 @@ class VlcPlayer():
         print(f"______sleeping for {wait_to_get_track_info_seconds}")
         sleep(wait_to_get_track_info_seconds)
 
-        # pause, go back to the beginning,
-        # set the volume back to something audible
         print("______Pausing")
         self.vlcPlayer.pause()
+
         print("______going back to beginning")
         self.vlcPlayer.set_position(0.0)
+
         wait_after_seek_0_seconds = 0.5
         print(f"______sleeping for {wait_after_seek_0_seconds}")
         sleep(wait_after_seek_0_seconds)
+
         print("______setting volume to settings")
         self.setDefaultVolumeFromSettings()
 
     def initPlayer(self, pathToTrack, withVlcGymnastics=False):
-        # todo - set volume via settings.json!
-        # settings_json = settings.get_settings()
-        # output_route = settings_json.get("audio_output")
-
         print(f"initPlayer: Setting media to {pathToTrack}")
         media = self.instance.media_new(pathToTrack)
         self.sourcePath = pathToTrack
@@ -125,14 +135,19 @@ class VlcPlayer():
         print("priming vlc for start - loading track in PAUSED state")
         self.triggerStart(pathToTrack, withPause=True)
 
-    def start(self, pathToTrack, syncTimestamp=None, master=False, slave=False):
-        print(f"************* IN VLC START: master = {master}")
+    def start(self, pathToTrack, master=False, slave=False):
+        print(f"************* IN VLC START: master = {master} slave = {slave}")
         try:
 
             if master or slave:
+                # we're in pairing mode, the player is already
+                # primed and loaded. We just need to press play
                 self.vlcPlayer.play()
             else:
                 self.triggerStart(pathToTrack)
+                # when we're not in pairing mode, we need to wait
+                # a little bit for the track to start playing
+                # so that getTrackLength will return a non zero figure
                 sleep(0.2)
 
             track_length_seconds = self.getTrackLength()
@@ -165,12 +180,9 @@ class VlcPlayer():
                 if self.vlcPlayer.get_state() == State.Paused:
                     frontend_friendly_status = "Paused"
 
-                # with the current frontend, the status must be the empty
+                # with the current table ui implementation, the status must be the empty
                 # string for the 'back' button to correctly navigate to the
                 # track list
-                #
-                # if self.player.get_state() == State.Stopped:
-                #     frontend_friendly_status = "Stopped"
 
                 status["source"] = self.sourcePath
                 status["playerState"] = frontend_friendly_status
@@ -212,7 +224,7 @@ class VlcPlayer():
             print("State.Playing - attempting to pause")
             self.vlcPlayer.pause()
 
-    def playPause(self, syncTimestamp=None):
+    def playPause(self):
         print("Playpausing...")
 
         self.playPauseToggler()
@@ -228,7 +240,7 @@ class VlcPlayer():
     def getPosition(self):
         return self.vlcPlayer.get_time() / 1000
 
-    def seek(self, position0_to_100, syncTimestamp=None):
+    def seek(self, position0_to_100):
 
         position0_to_1 = float(position0_to_100) / 100
         print(f"Telling vlc player to seek to {position0_to_1}")

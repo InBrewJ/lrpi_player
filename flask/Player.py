@@ -125,7 +125,7 @@ class LushRoomsPlayer():
 
         self.started = True
         track_length_seconds = self.player.start(
-            path, syncTime, self.isMaster(), self.isSlave())
+            path, self.isMaster(), self.isSlave())
 
         try:
             self.lighting.start(self.player, subs)

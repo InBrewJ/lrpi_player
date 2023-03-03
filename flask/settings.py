@@ -13,7 +13,7 @@ _SETTINGS = None
 
 def get_settings_path():
 
-    # when usb stick is not installed (e.g. unit tests), start with:
+    # when usb stick is not installed (e.g. for pytest), start with:
     # sudo LRPI_SETTINGS_PATH=/home/inbrewj/workshop/LushRooms/faux_usb/settings.json python3 -u flask/Server.py
 
     SETTINGS_PATH = os.environ.get(

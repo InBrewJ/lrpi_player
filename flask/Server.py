@@ -8,6 +8,7 @@
 
 #!/usr/bin/env python3
 
+from Ntp import getNtpTime
 import settings
 from content_reader import content_in_dir
 import logging
@@ -17,10 +18,8 @@ from pysrt import stream as srtstream
 from pysrt import open as srtopen  # pylint: disable=import-error
 import signal
 import time
-import pause  # pylint: disable=import-error
-from time import sleep
 from time import ctime
-import ntplib  # pylint: disable=import-error
+
 from flask_restful import reqparse
 from flask_jsonpify import jsonify
 from json import dumps
@@ -30,7 +29,6 @@ from flask import Flask, request, send_from_directory, render_template
 from os.path import splitext
 import os
 import os.path
-# os.environ["FLASK_ENV"] = "development"
 
 print("LushRooms player starting!")
 
@@ -39,7 +37,7 @@ print("LushRooms player starting!")
 
 mpegOnly = False
 allFormats = True
-useNTP = True
+useNTP = False
 
 app = Flask(__name__,  static_url_path='')
 api = Api(app)
@@ -51,10 +49,6 @@ if SENTRY_URL is not None:
     from raven.contrib.flask import Sentry
     sentry = Sentry(app, dsn=SENTRY_URL)
 
-
-# NTP_SERVER = 'ns1.luns.net.uk'
-NTP_SERVER = 'uk.pool.ntp.org'
-# BASE_PATH = "/home/inbrewj/workshop/LushRooms/faux_usb/"
 BUILT_PATH = None
 AUDIO_PATH_TEST_MP4 = "5.1_AAC_Test.mp4"
 JSON_LIST_FILE = "content.json"
@@ -63,14 +57,13 @@ MENU_DMX_VAL = os.environ.get("MENU_DMX_VAL", None)
 NEW_TRACK_ARRAY = []
 NEW_SRT_ARRAY = []
 
+# The player is inherently stateful
+# The same instance must be accessible across all routes
+# We could get around having this single global var by using another
+# singleton for LushRoomsPlayer. Chalk that up as a todo
 player = None
-paused = None
 
 # utils
-
-# Kill omx processes on a ctrl+c/program closure
-# to mirror the behaviour of vlc and, in turn, to
-# be more graceful
 
 
 def sigint_handler(signum, frame):
@@ -159,14 +152,7 @@ class GetTrackList(Resource):
         try:
 
             if useNTP:
-                c = ntplib.NTPClient()
-                try:
-                    response = c.request(NTP_SERVER, version=3)
-                    print('\n' + 30*'-')
-                    print('ntp time: ', ctime(response.tx_time))
-                    print(30*'-' + '\n')
-                except:
-                    print('Could not get ntp time!')
+                getNtpTime()
 
             # return a graceful error if the usb stick isn't mounted
             if os.path.isdir(MEDIA_BASE_PATH) == False:
@@ -536,7 +522,7 @@ def startServer():
     print(f"HOT RELOAD IS SET TO {use_reloader}")
     print("*" * 30)
     app.run(use_reloader=use_reloader, debug=settings_json["debug"], port=os.environ.get(
-        "PORT", "8686"), host='0.0.0.0')
+        "PORT", "80"), host='0.0.0.0')
 
 
 def appFactory():

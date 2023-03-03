@@ -39,20 +39,9 @@ else:
 
 class LushRoomsPlayer():
     def __init__(self, playlist, basePath):
-        # TODO BANANA: arch will differ here
-        # Additionally, Omxplayer likely won't work on a Banana - favour vlc going forward? Omxplayer is also likely NOT suited for the RPi4 (deprecation note...)
-        if False:
-            # we're likely on a 'Pi
-            self.playerType = "OMX"
-            print('Spawning omxplayer')
-            # self.player = OmxPlayer()
-        else:
-            # we're likely on a desktop
-            print('You are likely on a desktop / NOT a RPi 2 or 3!')
-            print('Therefore, spawning vlc player')
-            self.playerType = "VLC"
-            self.player = VlcPlayer()
-
+        print('Spawning vlc player')
+        self.audioPlayerType = "VLC"
+        self.audioPlayer = VlcPlayer()
         self.lighting = LushRoomsLighting()
         self.basePath = basePath
         self.started = False
@@ -67,7 +56,7 @@ class LushRoomsPlayer():
             "paired": False,
             "position": "",
             "trackDuration": "",
-            "playerType": self.playerType,
+            "playerType": self.audioPlayerType,
             "playlist": self.playlist,
             "error": "",
             "slave_url": None,
@@ -76,23 +65,23 @@ class LushRoomsPlayer():
         self.subs = None
 
     def getPlayerType(self):
-        return self.playerType
+        return self.audioPlayerType
 
     def isMaster(self):
-        print("isMaster", self.player.paired, self.status["master_ip"], self.player.paired and (
+        print("isMaster", self.audioPlayer.paired, self.status["master_ip"], self.audioPlayer.paired and (
             self.status["master_ip"] is None))
         # should this be based on "slave_ip" instead?
-        return self.player.paired and (self.status["master_ip"] is None)
+        return self.audioPlayer.paired and (self.status["master_ip"] is None)
 
     def isSlave(self):
-        print("isSlave", self.player.paired, self.status["master_ip"], self.player.paired and (
+        print("isSlave", self.audioPlayer.paired, self.status["master_ip"], self.audioPlayer.paired and (
             self.status["master_ip"] is None))
 
-        return self.player.paired and (self.status["master_ip"] is not None)
+        return self.audioPlayer.paired and (self.status["master_ip"] is not None)
 
     # Returns the track_length_seconds
     def start(self, path, subs, subsPath, syncTime=None):
-        self.player.status(self.status)
+        self.audioPlayer.status(self.status)
         self.status["source"] = path
         self.status["subsPath"] = subsPath
 
@@ -116,7 +105,7 @@ class LushRoomsPlayer():
             # time as possible, minimising the 'springhall reverb' effect
 
             print(f'Master :: priming master player with track {path}')
-            self.player.primeForStart(path)
+            self.audioPlayer.primeForStart(path)
             print(f'Master :: priming slave player with track {path}')
             self.sendSlaveCommand('primeForStart')
             print('Master :: sending start command!')
@@ -124,11 +113,11 @@ class LushRoomsPlayer():
             self.pauseIfSync(syncTime)
 
         self.started = True
-        track_length_seconds = self.player.start(
+        track_length_seconds = self.audioPlayer.start(
             path, self.isMaster(), self.isSlave())
 
         try:
-            self.lighting.start(self.player, subs)
+            self.lighting.start(self.audioPlayer, subs)
         except Exception as e:
             print('Lighting failed: ', e)
 
@@ -141,10 +130,9 @@ class LushRoomsPlayer():
             syncTime = self.sendSlaveCommand('playPause')
             self.pauseIfSync(syncTime)
 
-        response = self.player.playPause(syncTime)
+        response = self.audioPlayer.playPause()
 
         try:
-            print('In Player: ', id(self.player))
             self.lighting.playPause(self.getStatus()["playerState"])
         except Exception as e:
             print('Lighting playPause failed: ', e)
@@ -161,7 +149,7 @@ class LushRoomsPlayer():
                 self.pauseIfSync(syncTime)
 
             self.lighting.exit()
-            self.player.exit()
+            self.audioPlayer.exit()
 
             return 0
         except Exception as e:
@@ -201,11 +189,11 @@ class LushRoomsPlayer():
             pause.until(syncTimestamp)
 
         if interval > 0:
-            playerVolumeNow = self.player.getVolume()
+            playerVolumeNow = self.audioPlayer.getVolume()
             idealStepSize = 2
             stepsNeeded = playerVolumeNow / idealStepSize
             sleepPerStep = interval / stepsNeeded
-            while self.player.volumeDown(interval):
+            while self.audioPlayer.volumeDown(interval):
                 print(f"sleeping for {sleepPerStep}s until next volumeDown")
                 sleep(sleepPerStep)
 
@@ -213,19 +201,19 @@ class LushRoomsPlayer():
         # This forces the volume to be audible
         # when the next track starts playing
 
-        self.player.mute()
-        self.player.pause()
+        self.audioPlayer.mute()
+        self.audioPlayer.pause()
 
         # Only set the volume back to the original value from
         # settings if the next track doesn't require both
         # master and slave to be primed. Setting the volume
         # here messes with the vlc gymnastics in VlcPlayer.py
-        if not self.player.paired:
-            self.player.setDefaultVolumeFromSettings()
+        if not self.audioPlayer.paired:
+            self.audioPlayer.setDefaultVolumeFromSettings()
 
         sleep(0.2)
 
-        self.player.exit()
+        self.audioPlayer.exit()
         self.lighting.exit()
 
         # Then play the next track!
@@ -242,13 +230,13 @@ class LushRoomsPlayer():
                 syncTime = self.sendSlaveCommand('seek', position)
                 self.pauseIfSync(syncTime)
 
-            newPos = self.player.seek(position, syncTimestamp)
+            newPos = self.audioPlayer.seek(position)
             self.lighting.seek(newPos)
             return newPos
 
     def getStatus(self):
         self.status["slave_url"] = self.slaveUrl
-        return self.player.status(self.status)
+        return self.audioPlayer.status(self.status)
 
     # Pair methods called by the master
 
@@ -267,7 +255,7 @@ class LushRoomsPlayer():
                     self.slaveUrl + "/enslave").read()
                 print('res from enslave: ', enslaveRes)
                 master_ip = None
-                self.player.setPaired(True, master_ip)
+                self.audioPlayer.setPaired(True, master_ip)
 
         else:
             print(slaveHostname, 'is down! Cannot pair!')
@@ -284,7 +272,7 @@ class LushRoomsPlayer():
             freeRes = urllib.request.urlopen(self.slaveUrl + "/free").read()
             print('res from free: ', freeRes)
             if freeRes:
-                self.player.setPaired(False, None)
+                self.audioPlayer.setPaired(False, None)
             else:
                 print('Error freeing the slave')
                 return 1
@@ -294,12 +282,12 @@ class LushRoomsPlayer():
     # Methods called by the slave
 
     def setPairedAsSlave(self, val, masterIp):
-        self.player.setPaired(val, masterIp)
+        self.audioPlayer.setPaired(val, masterIp)
 
     def free(self):
-        if self.player.paired:
-            self.player.setPaired(False, None)
-            self.player.exit()
+        if self.audioPlayer.paired:
+            self.audioPlayer.setPaired(False, None)
+            self.audioPlayer.exit()
             return 0
 
     def pauseIfSync(self, syncTimestamp=None):
@@ -317,7 +305,7 @@ class LushRoomsPlayer():
 
     def commandFromMaster(self, masterStatus, command, position, startTime):
         res = 1
-        if self.player.paired:
+        if self.audioPlayer.paired:
 
             print('command from master: ', command)
             print('master status: ', masterStatus)
@@ -334,7 +322,7 @@ class LushRoomsPlayer():
                 pathToTrack = masterStatus["source"]
                 print(
                     f'Slave :: priming slave player with track {pathToTrack}')
-                self.player.primeForStart(pathToTrack)
+                self.audioPlayer.primeForStart(pathToTrack)
             else:
                 self.pauseIfSync(startTime)
 
@@ -372,7 +360,7 @@ class LushRoomsPlayer():
     # the slave with an 'eventSyncTime' timestamp
 
     def sendSlaveCommand(self, command, position=None):
-        if self.player.paired:
+        if self.audioPlayer.paired:
             print('sending command to slave: ', command)
             try:
 
@@ -423,10 +411,10 @@ class LushRoomsPlayer():
         return None
 
     def exit(self):
-        self.player.exit()
+        self.audioPlayer.exit()
 
     # mysterious Python destructor...
 
     def __del__(self):
-        self.player.__del__()
+        self.audioPlayer.__del__()
         print("LRPlayer died")

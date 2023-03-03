@@ -2,13 +2,15 @@
 
 BUILD_DIR="./docker-builds"
 PROJECT_DIR="/home/pi/workshop/LushRooms/docker_builds"
-HOST="tempcube.local"
+MASTER_HOST="tempcube.local"
+SLAVE_HOST="parkcube.local"
 HOST_USER="pi"
 
 echo "***** Copying images to $HOST"
 echo "***** (this may take a while depending on your network speed)"
 
-scp $BUILD_DIR/lrpi4-img-32.tar $HOST_USER@$HOST:$PROJECT_DIR
+scp $BUILD_DIR/lrpi4-img-32.tar $HOST_USER@$MASTER_HOST:$PROJECT_DIR
+scp $BUILD_DIR/lrpi4-img-32.tar $HOST_USER@$SLAVE_HOST:$PROJECT_DIR
 
 
 echo "***** Deployment to host: $HOST complete."

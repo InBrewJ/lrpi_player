@@ -36,5 +36,5 @@
 
 
 class TestPartyPairingMode:
-    def test_orwell(self):
+    def test_winston_orwell(self):
         assert 2 + 2 != 5

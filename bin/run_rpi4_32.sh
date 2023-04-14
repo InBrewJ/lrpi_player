@@ -14,7 +14,20 @@ sudo docker run -it --rm --network host -p $PORT:$PORT \
 -v /media/usb:/media/usb \
 --privileged \
 --device /dev/vchiq:/dev/vchiq \
-lushroom-player-rpi4.32bit:latest
+lushroom-player-rpi4:32bit
 
 
 # --restart=always \
+
+# or, for 64bit, from docker hub
+
+sudo docker run -it --rm --network host -p 80:80 \
+--env PORT=80 \
+-v $HOME/.pulse:/home/vlc/.pulse:rw \
+-v /dev/shm:/dev/shm \
+-v /dev/snd:/dev/snd \
+-v /var/lib/dbus:/var/lib/dbus \
+-v /media/usb:/media/usb \
+--privileged \
+--device /dev/vchiq:/dev/vchiq \
+inbrewj/lushroom-player-rpi4:64bit

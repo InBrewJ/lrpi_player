@@ -2,6 +2,7 @@ import ntplib  # pylint: disable=import-error
 from time import ctime
 
 # NTP_SERVER = 'ns1.luns.net.uk'
+# todo: check that the Lush private networks (esp in Japan...) can access uk.pool.ntp.org
 NTP_SERVER = 'uk.pool.ntp.org'
 
 

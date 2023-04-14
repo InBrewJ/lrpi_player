@@ -12,3 +12,4 @@ __pycache__/
 /docker-builds
 
 push_to_inbrewj.sh
+push_to_lush.sh

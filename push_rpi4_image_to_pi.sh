@@ -2,8 +2,8 @@
 
 BUILD_DIR="./docker-builds"
 PROJECT_DIR="/home/pi/workshop/LushRooms/docker_builds"
-MASTER_HOST="tempcube.local"
-SLAVE_HOST="parkcube.local"
+MASTER_HOST="redcube.local"
+SLAVE_HOST="greencube.local"
 HOST_USER="pi"
 
 echo "***** Copying images to $HOST"

@@ -85,8 +85,6 @@ class TestLrpiPlayerStates:
 
         status_response = client.get("/status").json
 
-        print(status_response)
-
         assert status_response['playerState'] == 'Paused'
         assert status_response['position'] > 1
 

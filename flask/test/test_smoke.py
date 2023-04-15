@@ -85,19 +85,6 @@ class TestLrpiPlayerSmokeTests:
         client.get("/get-track-list")
         response = client.get("/status")
 
-        expected_track_list = [
-            {
-                'ID': 'b4f1020c48a28b3cdf6be408c4f585d7', 'IsDir': True, 'MimeType': 'inode/directory', 'ModTime': '2023-02-24T17:15:40.908032Z', 'Name': 'Misophonia', 'Path': 'Misophonia', 'Size': -1
-            },
-            {
-                'ID': '3eb6e775e805ceae25d1a654de85c467', 'IsDir': True, 'MimeType': 'inode/directory',
-                'ModTime': '2023-02-24T17:15:40.920031Z', 'Name': 'Synthesia', 'Path': 'Synthesia', 'Size': -1
-            },
-            {
-                'ID': '494c2af90288e87f304b0e2a3e37d65d', 'IsDir': True, 'MimeType': 'inode/directory', 'ModTime': '2023-02-24T17:15:40.892035Z', 'Name': 'Tales_of_Bath', 'Path': 'Tales_of_Bath', 'Size': -1
-            }
-        ]
-
         expected_status = {
             'canControl': True,
             'error': '',
@@ -111,7 +98,7 @@ class TestLrpiPlayerSmokeTests:
             'source': '',
             'subsPath': '',
             'trackDuration': 0,
-            'volume': 100
+            'volume': 80
         }
 
         print(response.json)
@@ -174,8 +161,9 @@ class TestLrpiPlayerSmokeTests:
 
         status_response = client.get("/status")
 
-        print("* stat" * 30)
-        print(status_response)
+        print("*" * 30)
+        print("*** stat ***")
+        print(status_response.json)
         print("*" * 30)
 
         status_response = status_response.json

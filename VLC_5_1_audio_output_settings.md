@@ -24,6 +24,11 @@ Also try `200983752` or `335201928` in the 'hdmi_channel_map' field
 
 ## /etc/asound.conf
 
+Note - on an rpi 4 hw:0,0 is the headphone jack
+
+hw:1,0 is hdmi0
+hw:2,0 is hdmi1
+
 ```
 pcm.!surround51 {
 type route

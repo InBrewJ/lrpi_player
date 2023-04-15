@@ -1,0 +1,36 @@
+pcm.!default {
+    type asym # combined playback and capture
+
+    playback.pcm {
+        type plug # format conversion
+
+        slave.pcm {
+            type upmix # on-demand upmixing
+
+            slave.pcm {
+                type dmix # multi-stream mixing
+                ipc_key 4897
+
+                slave {
+                    pcm hw
+                    channels 6 # adjust as necessary (e.g. 8 for 7.1 audio)
+
+                    # MAY be necessary to avoid buffer underruns/audio skipping
+                    # YMMV, remove or adjust values as you see fit
+                    period_time 0
+                    period_size 1024 # double if you notice increased CPU load or crackling
+                                     # halve if you like lower latency
+                                     # (e.g. when adjusting volume with softvol enabled)
+                    buffer_time 0
+                    buffer_size 8192 # some applications do not like smaller buffers
+                }
+            }
+        }
+    }
+
+    capture.pcm {
+        type dsnoop
+        ipc_key 7974
+        slave.pcm hw
+    }
+}

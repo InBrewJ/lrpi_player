@@ -1,0 +1,35 @@
+pcm.!default {
+	type asym
+	 playback.pcm {
+	   type plug
+	   slave.pcm "hw:0,0"
+	 }
+	 capture.pcm {
+	   type plug
+	   slave.pcm "hw:1,0"
+	 }
+  }
+
+pcm.!hdmiSurround51 {
+	type route
+	slave.pcm "hw:1,0"
+	slave.channels 8
+	ttable {
+		0.0= 1
+		1.1= 1
+		2.4= 1
+		3.5= 1
+		4.2= 1
+		5.3= 1
+		6.6= 0
+		7.7= 0
+	}
+}
+
+pcm.!headphoneJackStereo {
+	type asym
+	playback.pcm {
+	   type plug
+	   slave.pcm "hw:0,0"
+	}
+}

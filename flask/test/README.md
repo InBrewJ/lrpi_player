@@ -13,3 +13,9 @@ pytest
 Caveats:
 
 - only tested on Ubuntu on an Intel machine
+
+to run specific tests:
+
+```
+pytest -vv -k "test_play_pause"
+```

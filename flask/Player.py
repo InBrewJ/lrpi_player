@@ -29,19 +29,20 @@ def findArm():
 
 
 if False:
+    # For Rpi 3 system
     from OmxPlayer import OmxPlayer
-else:
+    # For systems where VLC decodes high bitrate audio fast enough
     from VlcPlayer import VlcPlayer
+else:
+    # For now, for Rpi 4
+    from MpvPlayer import MpvPlayer
 
-
-# todo:
-# VlcPlayer should also be singleton?
 
 class LushRoomsPlayer():
     def __init__(self, playlist, basePath):
-        print('Spawning vlc player')
-        self.audioPlayerType = "VLC"
-        self.audioPlayer = VlcPlayer()
+        print('Spawning LushRoomsPlayer')
+        self.audioPlayerType = "MPV"
+        self.audioPlayer = MpvPlayer()
         self.lighting = LushRoomsLighting()
         self.basePath = basePath
         self.started = False
@@ -197,7 +198,9 @@ class LushRoomsPlayer():
                 print(f"sleeping for {sleepPerStep}s until next volumeDown")
                 sleep(sleepPerStep)
 
-        # VLC gymnastics
+        # Player gymnastics
+        # todo: we had to do this for vlc
+        # maybe we don't need to do it for mpv?
         # This forces the volume to be audible
         # when the next track starts playing
 

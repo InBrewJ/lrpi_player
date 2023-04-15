@@ -104,15 +104,17 @@ class TestLrpiPlayerSmokeTests:
             'master_ip': '',
             'paired': False,
             'playerState': '',
-            'playerType': 'VLC',
+            'playerType': 'MPV',
             'playlist': ['not bothered about playlist in this test'],
-            'position': -0.001,
+            'position': None,
             'slave_url': None,
             'source': '',
             'subsPath': '',
             'trackDuration': 0,
-            'volume': 0
+            'volume': 100
         }
+
+        print(response.json)
 
         assert equal_dicts(
             response.json,

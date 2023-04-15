@@ -115,4 +115,4 @@ class TestLrpiPlayerStates:
         print(status_response)
 
         assert status_response['playerState'] == ''
-        assert status_response['position'] < 0
+        assert status_response['position'] == None

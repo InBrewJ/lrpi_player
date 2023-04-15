@@ -1,5 +1,5 @@
 from time import sleep
-import mpv
+import mpv as libmpv
 import settings
 
 # mpv binding repo (for v0.5.2 - this version is most easily installed on Rpi4 Bullseye with odd old Debian repo listings)
@@ -17,7 +17,7 @@ import settings
 # sudo apt install mpv libmpv-dev python3-mpv
 
 
-class MpvInstance():
+class Mpv():
     _instance = None
 
     # makes mpv.MPV a bonafide singleton
@@ -29,14 +29,14 @@ class MpvInstance():
 
     def __init__(self):
         raise RuntimeError(
-            'For safety reasons, only call instance() or destroy(), e.g. MpvInstance.destroy() - only one set of parentheses!')
+            'For safety reasons, only call instance() or destroy(), e.g. Mpv.destroy() - only one set of parentheses!')
 
     @classmethod
     def instance(cls):
         if cls._instance is None:
             print('Creating new MpvInstance')
-            cls._instance = mpv.MPV(ytdl=False, input_default_bindings=True,
-                                    input_vo_keyboard=False)
+            cls._instance = libmpv.MPV(ytdl=False, input_default_bindings=True,
+                                       input_vo_keyboard=False)
         return cls._instance
 
     @classmethod
@@ -79,8 +79,12 @@ class MpvPlayer():
         # host of resources here, too
         # https://elinux.org/New_Pi_OS_sound_trouble_shooting
 
-        MpvInstance.instance().audio_output_device_set(
-            None, device_id)
+        # must be set in /etc/asound.conf
+        # see mpv_test/asoundrc_example_51
+        for_hdmi = 'alsa/hdmiSurround51'
+        for_jack = 'alsa/headphoneJackStereo'
+
+        Mpv.instance()["audio-device"] = for_jack
 
     def initGymnastics(self):
         self.setDefaultVolumeFromSettings()
@@ -94,7 +98,7 @@ class MpvPlayer():
 
     def getTrackLength(self):
         # if it's not available - this will ALWAYS crash
-        length_from_mpv = MpvInstance.instance()._get_property('duration')
+        length_from_mpv = Mpv.instance()._get_property('duration')
         if length_from_mpv is None or length_from_mpv < 0:
             return 0
         else:
@@ -102,7 +106,7 @@ class MpvPlayer():
 
     def setVolume(self, value_0_to_100):
         print(f"setVolume: Setting volume to {value_0_to_100}")
-        MpvInstance.instance().volume = value_0_to_100
+        Mpv.instance().volume = value_0_to_100
         return value_0_to_100
 
     def setDefaultVolumeFromSettings(self):
@@ -115,9 +119,9 @@ class MpvPlayer():
         self.initPlayer(pathToTrack, initGymnastics)
 
         if not withPause:
-            MpvInstance.instance().play(pathToTrack)
+            Mpv.instance().play(pathToTrack)
             print("****** WAITING UNTIL PLAYBACK BEGINS ******")
-            MpvInstance.instance().wait_until_playing()
+            Mpv.instance().wait_until_playing()
 
         self.setDefaultVolumeFromSettings()
 
@@ -135,7 +139,7 @@ class MpvPlayer():
             if master or slave:
                 # we're in pairing mode, the player is already
                 # primed and loaded. We just need to press play
-                MpvInstance.instance().play()
+                Mpv.instance().play()
             else:
                 self.triggerStart(pathToTrack)
                 # when we're not in pairing mode, we need to wait
@@ -160,17 +164,17 @@ class MpvPlayer():
             return str(0)
 
     def status(self, status):
-        if MpvInstance.instance() != None:
+        if Mpv.instance() != None:
             print('status requested from MPV player!')
             try:
 
                 frontend_friendly_status = ""
 
                 # todo - map to simple dict
-                if MpvInstance.instance()._get_property('core-idle') == False:
+                if Mpv.instance()._get_property('core-idle') == False:
                     frontend_friendly_status = "Playing"
 
-                if MpvInstance.instance()._get_property('pause') == True:
+                if Mpv.instance()._get_property('pause') == True:
                     frontend_friendly_status = "Paused"
 
                 # with the current table ui implementation, the status must be the empty
@@ -200,7 +204,7 @@ class MpvPlayer():
         return status
 
     def playPauseToggler(self):
-        MpvInstance.instance()['pause'] = not MpvInstance.instance()['pause']
+        Mpv.instance()['pause'] = not Mpv.instance()['pause']
 
     def playPause(self):
         print("Playpausing...")
@@ -216,26 +220,26 @@ class MpvPlayer():
         print('master_ip set to: ', masterIp)
 
     def getPosition(self):
-        return MpvInstance.instance()._get_property('time-pos')
+        return Mpv.instance()._get_property('time-pos')
 
     def seek(self, position0_to_100):
         print(f"Telling mpv player to seek to {position0_to_100}%")
-        MpvInstance.instance().seek(position0_to_100, reference='absolute-percent')
+        Mpv.instance().seek(position0_to_100, reference='absolute-percent')
         return self.getPosition()
 
     def pause(self):
-        MpvInstance.instance()['pause'] = True
+        Mpv.instance()['pause'] = True
 
     def stop(self):
         print("Stopping...")
-        MpvInstance.instance().command('stop')
+        Mpv.instance().command('stop')
 
     def mute(self):
         print("Muting...")
-        MpvInstance.instance().volume = 0
+        Mpv.instance().volume = 0
 
     def getVolume(self):
-        return MpvInstance.instance()._get_property('volume')
+        return Mpv.instance()._get_property('volume')
 
     def volumeUp(self):
         pass
@@ -267,15 +271,15 @@ class MpvPlayer():
             return True
 
     def exit(self):
-        MpvInstance.destroy()
+        Mpv.destroy()
 
     def __del__(self):
         attempt_to_cleanup_mpv = False
 
         if attempt_to_cleanup_mpv:
-            MpvInstance.destroy()
+            Mpv.destroy()
         else:
-            MpvInstance.instance().stop()
+            Mpv.instance().stop()
             print("Player stopped, setting volume back to 70")
             self.setDefaultVolumeFromSettings()
 

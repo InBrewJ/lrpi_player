@@ -26,8 +26,10 @@ class MpvInstance():
     # to minimize thousands of 'mpv.MPV' which may
     # in turn spawn thousands of processes, make sure only
     # one mpv.MPV is created
-    # def __init__(self):
-    #     raise RuntimeError('For safety reasons, call instance() instead')
+
+    def __init__(self):
+        raise RuntimeError(
+            'For safety reasons, only call instance() or destroy(), e.g. MpvInstance.destroy() - only one set of parentheses!')
 
     @classmethod
     def instance(cls):
@@ -265,21 +267,16 @@ class MpvPlayer():
             return True
 
     def exit(self):
-
-        if MpvInstance.instance():
-            print("Exiting and destroying MPV")
-            MpvInstance().destroy()
-        else:
-            return 1
+        MpvInstance.destroy()
 
     def __del__(self):
         attempt_to_cleanup_mpv = False
 
         if attempt_to_cleanup_mpv:
-            MpvInstance().destroy()
+            MpvInstance.destroy()
         else:
             MpvInstance.instance().stop()
             print("Player stopped, setting volume back to 70")
-            self.setVolume(self.initialVolumeFromSettings)
+            self.setDefaultVolumeFromSettings()
 
         print("MPV died")

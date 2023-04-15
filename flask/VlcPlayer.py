@@ -65,7 +65,7 @@ class VlcPlayer():
         self.vlcPlayer.audio_output_device_set(
             None, device_id)
 
-    def vlcGymnastics(self):
+    def initGymnastics(self):
         print("______Doing VLC gymnastics")
         print("______Setting volume to zero")
         self.setVolume(0)
@@ -91,14 +91,14 @@ class VlcPlayer():
         print("______setting volume to settings")
         self.setDefaultVolumeFromSettings()
 
-    def initPlayer(self, pathToTrack, withVlcGymnastics=False):
+    def initPlayer(self, pathToTrack, withGymnastics=False):
         print(f"initPlayer: Setting media to {pathToTrack}")
         media = self.instance.media_new(pathToTrack)
         self.sourcePath = pathToTrack
         self.vlcPlayer.set_media(media)
 
-        if withVlcGymnastics:
-            self.vlcGymnastics()
+        if withGymnastics:
+            self.initGymnastics()
 
         # This audio device setting function doesn't seem to
         # work as expected...

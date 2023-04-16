@@ -1,6 +1,6 @@
-from time import sleep
 import mpv as libmpv
 import settings
+import os
 
 # mpv binding repo (for v0.5.2 - this version is most easily installed on Rpi4 Bullseye with odd old Debian repo listings)
 # https://github.com/jaseg/python-mpv/tree/v0.5.2
@@ -28,7 +28,7 @@ class Mpv():
         "ytdl": False,
         "input_default_bindings": True,
         "input_vo_keyboard": False,
-        "log_handler": mpv_logger
+        # "log_handler": mpv_logger
     }
 
     # makes mpv.MPV a bonafide singleton
@@ -47,7 +47,7 @@ class Mpv():
         if cls._instance is None:
             print('Creating new MpvInstance')
             cls._instance = libmpv.MPV(**cls._mpv_standard_args)
-            cls._instance.set_loglevel('v')
+            cls._instance.set_loglevel('warn')
             cls._instance.wait_for_property('idle-active')
         return cls._instance
 
@@ -58,7 +58,7 @@ class Mpv():
         if cls._instance is None:
             print('Creating new MpvInstance (PAUSED)')
             cls._instance = libmpv.MPV(**cls._mpv_standard_args, pause=True)
-            cls._instance.set_loglevel('v')
+            cls._instance.set_loglevel('warn')
             print('waiting until idle-active...')
             cls._instance.wait_for_property('idle-active')
             print('returning paused instance...')
@@ -80,6 +80,11 @@ class MpvPlayer():
         settings_json = settings.get_settings()
         self.initialVolumeFromSettings: int = int(
             settings_json["audio_volume"])
+
+    def validateTrackPath(self, pathToTrack):
+        # todo: think about safely using this
+        if not os.path.isfile(pathToTrack):
+            raise Exception(f"{pathToTrack} is not a valid path")
 
     def getAudioOutput(self, settings_json):
         # lrpi_player#105

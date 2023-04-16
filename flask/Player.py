@@ -78,7 +78,25 @@ class LushRoomsPlayer():
 
         return self.audioPlayer.paired and (self.status["master_ip"] is not None)
 
+    def loadSubtitles(self, subsPath):
+        if os.path.isfile(subsPath):
+            start_time = time.time()
+            print("Loading SRT file " + subsPath + " - " + str(start_time))
+            subs = srtopen(subsPath)
+            # subs = srtstream(subsPath)
+            end_time = time.time()
+            print("Finished loading SRT file " +
+                  subsPath + " - " + str(end_time))
+            print("Total time elapsed: " +
+                  str(end_time - start_time) + " seconds")
+            return subs
+        else:
+            print(
+                f"Subtitle track file {subsPath} is not valid. Subtitles will NOT be loaded")
+            return None
+
     # Returns the track_length_seconds
+
     def start(self, path, subs, subsPath, syncTime=None):
         self.audioPlayer.status(self.status)
         self.status["source"] = path
@@ -89,18 +107,8 @@ class LushRoomsPlayer():
         # in party mode - these subs need to be loaded _before_ playback start
         # on the slave. Otherwise audio will _always_ play 'Total time elapsed'
         # seconds BEHIND on the slave
-        # ---- todo: uncomment!
-        # if os.path.isfile(subsPath):
-        #     start_time = time.time()
-        #     print("Loading SRT file " + subsPath + " - " + str(start_time))
-        #     subs = srtopen(subsPath)
-        #     # subs = srtstream(subsPath)
-        #     end_time = time.time()
-        #     print("Finished loading SRT file " +
-        #           subsPath + " - " + str(end_time))
-        #     print("Total time elapsed: " +
-        #           str(end_time - start_time) + " seconds")
-        # ---- todo: uncomment! end
+        if not self.isMaster() and not self.isSlave():
+            self.subs = self.loadSubtitles(subsPath)
 
         if self.isMaster():
             # if the command is 'start' we need to prime both players
@@ -108,8 +116,11 @@ class LushRoomsPlayer():
             # this ensures that tracks start at as close to the same
             # time as possible, minimising the 'springhall reverb' effect
 
+            print(f'Master :: priming master player subtitles from {subsPath}')
+            self.subs = self.loadSubtitles(subsPath)
             print(f'Master :: priming master player with track {path}')
             self.audioPlayer.primeForStart(path)
+            print(f'Master :: PLAYER IS PRIMED')
             print(f'Master :: priming slave player with track {path}')
             self.sendSlaveCommand('primeForStart')
             print('Master :: sending start command!')
@@ -122,8 +133,7 @@ class LushRoomsPlayer():
 
         try:
             # todo: uncomment!
-            # self.lighting.start(self.audioPlayer, subs)
-            pass
+            self.lighting.start(self.audioPlayer, self.subs)
         except Exception as e:
             print('Lighting failed: ', e)
 
@@ -336,11 +346,18 @@ class LushRoomsPlayer():
 
             # All commands are mutually exclusive
 
+            # We do not have a startTime for primeForStart, it is the precursor to
+            # all other waits. The master will wait patiently until the slave
+            # has been primed
             if command == "primeForStart":
-                pathToTrack = masterStatus["source"]
+                pathToAudioTrack = masterStatus["source"]
+                pathToSubsTrack = masterStatus["subsPath"]
                 print(
-                    f'Slave :: priming slave player with track {pathToTrack}')
-                self.audioPlayer.primeForStart(pathToTrack)
+                    f'Slave :: priming slave player subtitles from {pathToSubsTrack}')
+                self.subs = self.loadSubtitles(pathToSubsTrack)
+                print(
+                    f'Slave :: priming slave player with track {pathToAudioTrack}')
+                self.audioPlayer.primeForStart(pathToAudioTrack)
                 print(f'Slave :: PLAYER IS PRIMED')
             else:
                 self.pauseIfSync(startTime)

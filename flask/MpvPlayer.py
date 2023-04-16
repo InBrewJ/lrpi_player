@@ -28,7 +28,7 @@ class Mpv():
         "ytdl": False,
         "input_default_bindings": True,
         "input_vo_keyboard": False,
-        # "log_handler": mpv_logger
+        "log_handler": mpv_logger
     }
 
     # makes mpv.MPV a bonafide singleton
@@ -53,7 +53,7 @@ class Mpv():
 
     @classmethod
     def paused_instance(cls):
-        print('Creating new MpvInstance :: destroying old instance')
+        print('In order to create "paused_instance" :: destroying old instance')
         Mpv.destroy()
         if cls._instance is None:
             print('Creating new MpvInstance (PAUSED)')

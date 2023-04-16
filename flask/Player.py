@@ -45,7 +45,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffsetSeconds = 3
+        self.slaveCommandOffsetSeconds = 2
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -86,16 +86,21 @@ class LushRoomsPlayer():
 
         print("***************  player wrapper :: start  ********************")
 
-        if os.path.isfile(subsPath):
-            start_time = time.time()
-            print("Loading SRT file " + subsPath + " - " + str(start_time))
-            subs = srtopen(subsPath)
-            # subs = srtstream(subsPath)
-            end_time = time.time()
-            print("Finished loading SRT file " +
-                  subsPath + " - " + str(end_time))
-            print("Total time elapsed: " +
-                  str(end_time - start_time) + " seconds")
+        # in party mode - these subs need to be loaded _before_ playback start
+        # on the slave. Otherwise audio will _always_ play 'Total time elapsed'
+        # seconds BEHIND on the slave
+        # ---- todo: uncomment!
+        # if os.path.isfile(subsPath):
+        #     start_time = time.time()
+        #     print("Loading SRT file " + subsPath + " - " + str(start_time))
+        #     subs = srtopen(subsPath)
+        #     # subs = srtstream(subsPath)
+        #     end_time = time.time()
+        #     print("Finished loading SRT file " +
+        #           subsPath + " - " + str(end_time))
+        #     print("Total time elapsed: " +
+        #           str(end_time - start_time) + " seconds")
+        # ---- todo: uncomment! end
 
         if self.isMaster():
             # if the command is 'start' we need to prime both players
@@ -116,7 +121,9 @@ class LushRoomsPlayer():
             path, self.isMaster(), self.isSlave())
 
         try:
-            self.lighting.start(self.audioPlayer, subs)
+            # todo: uncomment!
+            # self.lighting.start(self.audioPlayer, subs)
+            pass
         except Exception as e:
             print('Lighting failed: ', e)
 
@@ -334,6 +341,7 @@ class LushRoomsPlayer():
                 print(
                     f'Slave :: priming slave player with track {pathToTrack}')
                 self.audioPlayer.primeForStart(pathToTrack)
+                print(f'Slave :: PLAYER IS PRIMED')
             else:
                 self.pauseIfSync(startTime)
 

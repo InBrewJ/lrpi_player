@@ -1,3 +1,7 @@
+# install mpv on linux systems like this
+# sudo apt install mpv libmpv-dev python3-mpv
+# not entirely sure how to get it running on MacOS just yet...
+
 import mpv
 from time import sleep
 

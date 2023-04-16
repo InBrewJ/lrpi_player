@@ -17,8 +17,19 @@ import settings
 # sudo apt install mpv libmpv-dev python3-mpv
 
 
+def mpv_logger(loglevel, component, message):
+    print('[{}] {}: {}'.format(loglevel, component, message))
+
+
 class Mpv():
     _instance = None
+
+    _mpv_standard_args = {
+        "ytdl": False,
+        "input_default_bindings": True,
+        "input_vo_keyboard": False,
+        "log_handler": mpv_logger
+    }
 
     # makes mpv.MPV a bonafide singleton
     # I'm not sure how the mpv library works under the hood
@@ -29,14 +40,26 @@ class Mpv():
 
     def __init__(self):
         raise RuntimeError(
-            'For safety reasons, only call instance() or destroy(), e.g. Mpv.destroy() - only one set of parentheses!')
+            'For safety reasons, only call instance(), paused_instance() or destroy(), e.g. Mpv.destroy() - only one set of parentheses!')
 
     @classmethod
     def instance(cls):
         if cls._instance is None:
             print('Creating new MpvInstance')
-            cls._instance = libmpv.MPV(ytdl=False, input_default_bindings=True,
-                                       input_vo_keyboard=False)
+            cls._instance = libmpv.MPV(**cls._mpv_standard_args)
+            cls._instance.set_loglevel('v')
+            cls._instance.wait_for_property('idle-active')
+        return cls._instance
+
+    @classmethod
+    def paused_instance(cls):
+        print('Creating new MpvInstance :: destroying old instance')
+        Mpv.destroy()
+        if cls._instance is None:
+            print('Creating new MpvInstance (PAUSED)')
+            cls._instance = libmpv.MPV(**cls._mpv_standard_args, pause=True)
+            cls._instance.set_loglevel('v')
+            cls._instance.wait_for_property('idle-active')
         return cls._instance
 
     @classmethod
@@ -83,6 +106,7 @@ class MpvPlayer():
         # see mpv_test/asoundrc_example_51
         for_hdmi = 'alsa/hdmiSurround51'
         for_jack = 'alsa/headphoneJackStereo'
+        fallback = 'default'
 
         Mpv.instance()["audio-device"] = for_jack
 
@@ -91,7 +115,6 @@ class MpvPlayer():
 
     def initPlayer(self, pathToTrack, withGymnastics=False):
         print(f"initPlayer: Setting media to {pathToTrack}")
-        # MpvInstance.instance().play(pathToTrack)
 
         if withGymnastics:
             self.initGymnastics()
@@ -118,6 +141,12 @@ class MpvPlayer():
         initGymnastics = withPause
         self.initPlayer(pathToTrack, initGymnastics)
 
+        if withPause:
+            print(
+                f"*** withPause = True, creating PAUSED instance, track {pathToTrack} ***")
+            Mpv.paused_instance()
+            Mpv.instance().play(pathToTrack)
+
         if not withPause:
             Mpv.instance().play(pathToTrack)
             print("****** WAITING UNTIL PLAYBACK BEGINS ******")
@@ -127,6 +156,7 @@ class MpvPlayer():
 
     def primeForStart(self, pathToTrack):
         print("priming mpv for start - loading track in PAUSED state")
+        self.sourcePath = pathToTrack
         # Note that mpv has a --pause staring option...
         # https://mpv.io/manual/master/#options-pause
         self.triggerStart(pathToTrack, withPause=True)
@@ -139,18 +169,15 @@ class MpvPlayer():
             if master or slave:
                 # we're in pairing mode, the player is already
                 # primed and loaded. We just need to press play
-                Mpv.instance().play()
+                # todo: it's not yet primed and loaded for Mpv...
+                print("*** Attempting to unpause playing after priming ***")
+                Mpv.instance()['pause'] = False
+                # Mpv.instance().wait_until_playing()
             else:
                 self.triggerStart(pathToTrack)
-                # when we're not in pairing mode, we need to wait
-                # a little bit for the track to start playing
-                # so that getTrackLength will return a non zero figure
-                sleep(0.2)
 
             track_length_seconds = self.getTrackLength()
 
-            # For whatever reason, audio_set_volume
-            # will only work after the track has been playing for some short time
             self.setDefaultVolumeFromSettings()
 
             print("************** Playing on mpv...",

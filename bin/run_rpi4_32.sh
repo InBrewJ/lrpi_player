@@ -34,6 +34,7 @@ inbrewj/lushroom-player-rpi4:64bit
 
 
 # or, for 64bit, from lushdigital docker hub
+# not convinced we need to dbus line
 
 sudo docker run -it --rm --network host -p 80:80 \
 --env PORT=80 \

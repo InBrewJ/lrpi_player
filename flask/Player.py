@@ -47,7 +47,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 2.7  # seconds
+        self.slaveCommandOffset = 3.5  # seconds
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -92,7 +92,7 @@ class LushRoomsPlayer():
             start_time = time.time()
             print("Loading SRT file " + subsPath + " - " + str(start_time))
             subs = srtopen(subsPath)
-            #subs = srtstream(subsPath)
+            # subs = srtstream(subsPath)
             end_time = time.time()
             print("Finished loading SRT file " +
                   subsPath + " - " + str(end_time))
@@ -307,6 +307,13 @@ class LushRoomsPlayer():
     # master to a method
 
     def commandFromMaster(self, masterStatus, command, position, startTime):
+
+        localTimestamp = calendar.timegm(
+            datetime.datetime.now().timetuple())
+
+        print('commandFromMaster :: currentUnixTimestamp (local on pi: )',
+              ctime(localTimestamp))
+
         res = 1
         if self.audioPlayer.paired:
 
@@ -370,7 +377,8 @@ class LushRoomsPlayer():
                 localTimestamp = calendar.timegm(
                     datetime.datetime.now().timetuple())
 
-                print('currentUnixTimestamp (local on pi: )', localTimestamp)
+                print('currentUnixTimestamp (local on pi: )',
+                      ctime(localTimestamp))
                 self.eventSyncTime = localTimestamp + self.slaveCommandOffset
                 print("*" * 30)
                 print(f"MASTER COMMAND SENT {command}, events sync at: ", ctime(
@@ -388,7 +396,7 @@ class LushRoomsPlayer():
                 def slaveRequest():
                     slaveRes = requests.post(
                         self.slaveUrl + '/command', json=postFields)
-                    print('command from slave, res: ', slaveRes)
+                    print('command from slave, res: ', slaveRes.json)
 
                 if command == "primeForStart":
                     # we only want the primeForStart command to be blocking.

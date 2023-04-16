@@ -92,6 +92,9 @@ def start():
 
     player['volume'] = 87
 
+    # for surround sound via alsa - also see:
+    # https://mpv.io/manual/master/#audio-output-drivers-alsa
+
     player.play(path_to_track)
 
     player.wait_until_playing()

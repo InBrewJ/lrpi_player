@@ -16,10 +16,12 @@ from time import sleep
 # or: https://mpv.io/manual/master/#audio-output-drivers-alsa
 # can it be changed via an IPC command?
 
-path_to_track = '/mnt/usb1/lushrooms2023/02_Tales_of_bath_Poem.mp4'
+path_to_track = '/mnt/usb1/lushrooms2023/tracks/17_Tales_of_bath/02_Tales_of_bath_Poem.mp4'
+# path_to_track = '/home/inbrewj/workshop/LushRooms/faux_usb/tracks/17_Tales_of_bath/02_Tales_of_bath_Poem.mp4'
 
 player = mpv.MPV(ytdl=False, input_default_bindings=True,
-                 input_vo_keyboard=False)
+                 input_vo_keyboard=False, pause=True)
+player.wait_for_property('idle-active')
 
 # Property access, these can be changed at runtime
 @player.property_observer('time-pos')
@@ -39,14 +41,22 @@ def time_observer(_name, value):
 @player.property_observer('volume')
 def volume_observer(_name, value):
     if value is not None:
-        print(f'property.ao-volume = {value}')
+        print(f'property.volume = {value}')
 
 # how to start with a defined volume?
 
 
-player['volume'] = 50
+player['volume'] = 61
+
+print("starting, but paused")
 
 player.play(path_to_track)
+
+sleep(1)
+
+print("unpausing")
+player["pause"] = False
+
 player.wait_until_playing()
 # If we can figure alsa configs out, we can decouple mpv audio devices from board specific devices; they will depend on the device definitions we set up in alsa
 #
@@ -56,10 +66,17 @@ player.wait_until_playing()
 # hdmi = alsa/hdmiSurround51
 # jack = alsa/headphoneJackStereo
 # the above will work with the contents of 'mpv_test/asoundrc_example_51' saved in /etc/asound.conf
-player["audio-device"] = 'alsa/headphoneJackStereo'
+# player["audio-device"] = 'alsa/headphoneJackStereo'
+
+
+seek_to = 10
+
+# print(f'seek to {seek_to}%')
+
+# player.seek(seek_to, reference='absolute-percent')
 
 # and some commands
-sleep(3)
+sleep(10)
 
 print('pausing...')
 

@@ -28,7 +28,7 @@ class Mpv():
         "ytdl": False,
         "input_default_bindings": True,
         "input_vo_keyboard": False,
-        "log_handler": mpv_logger
+        # "log_handler": mpv_logger
     }
 
     # makes mpv.MPV a bonafide singleton
@@ -59,7 +59,9 @@ class Mpv():
             print('Creating new MpvInstance (PAUSED)')
             cls._instance = libmpv.MPV(**cls._mpv_standard_args, pause=True)
             cls._instance.set_loglevel('v')
+            print('waiting until idle-active...')
             cls._instance.wait_for_property('idle-active')
+            print('returning paused instance...')
         return cls._instance
 
     @classmethod
@@ -146,9 +148,13 @@ class MpvPlayer():
                 f"*** withPause = True, creating PAUSED instance, track {pathToTrack} ***")
             Mpv.paused_instance()
             Mpv.instance().play(pathToTrack)
+            Mpv.instance().wait_until_paused()
 
         if not withPause:
+            Mpv.paused_instance()
             Mpv.instance().play(pathToTrack)
+            Mpv.instance().wait_until_paused()
+            Mpv.instance()["pause"] = False
             print("****** WAITING UNTIL PLAYBACK BEGINS ******")
             Mpv.instance().wait_until_playing()
 
@@ -171,8 +177,10 @@ class MpvPlayer():
                 # primed and loaded. We just need to press play
                 # todo: it's not yet primed and loaded for Mpv...
                 print("*** Attempting to unpause playing after priming ***")
-                Mpv.instance()['pause'] = False
-                # Mpv.instance().wait_until_playing()
+                Mpv.instance()["pause"] = False
+                print("*** unpaused after priming, waiting until playing ***")
+                Mpv.instance().wait_until_playing()
+                print("*** playing... ***")
             else:
                 self.triggerStart(pathToTrack)
 

@@ -20,7 +20,8 @@ path_to_track = '/mnt/usb1/lushrooms2023/tracks/17_Tales_of_bath/02_Tales_of_bat
 # path_to_track = '/home/inbrewj/workshop/LushRooms/faux_usb/tracks/17_Tales_of_bath/02_Tales_of_bath_Poem.mp4'
 
 player = mpv.MPV(ytdl=False, input_default_bindings=True,
-                 input_vo_keyboard=False, pause=True)
+                 input_vo_keyboard=False, pause=True, log_handler=print)
+player.set_loglevel('v')
 player.wait_for_property('idle-active')
 
 # Property access, these can be changed at runtime
@@ -51,8 +52,16 @@ player['volume'] = 61
 print("starting, but paused")
 
 player.play(path_to_track)
+player.wait_until_paused()
+# player.wait_for_property('idle-active')
 
-sleep(1)
+sleep(2)
+
+seek_to = 10
+print(f'seek to {seek_to}%')
+
+player.seek(seek_to, reference='absolute-percent')
+
 
 print("unpausing")
 player["pause"] = False
@@ -68,12 +77,6 @@ player.wait_until_playing()
 # the above will work with the contents of 'mpv_test/asoundrc_example_51' saved in /etc/asound.conf
 # player["audio-device"] = 'alsa/headphoneJackStereo'
 
-
-seek_to = 10
-
-# print(f'seek to {seek_to}%')
-
-# player.seek(seek_to, reference='absolute-percent')
 
 # and some commands
 sleep(10)

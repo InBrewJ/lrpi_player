@@ -9,7 +9,6 @@ from urllib import parse
 import requests
 from Lighting import LushRoomsLighting
 import ntplib  # pylint: disable=import-error
-from time import ctime
 import pause  # pylint: disable=import-error
 from pysrt import open as srtopen  # pylint: disable=import-error
 from pysrt import stream as srtstream
@@ -20,7 +19,6 @@ from threading import Thread
 
 # utils
 
-# NTP_SERVER = 'ns1.luns.net.uk'
 NTP_SERVER = 'uk.pool.ntp.org'
 
 
@@ -47,7 +45,7 @@ class LushRoomsPlayer():
         self.basePath = basePath
         self.started = False
         self.playlist = playlist
-        self.slaveCommandOffset = 3.5  # seconds
+        self.slaveCommandOffsetSeconds = 3
         self.slaveUrl = None
         self.status = {
             "source": "",
@@ -187,7 +185,7 @@ class LushRoomsPlayer():
         if syncTimestamp and self.isSlave():
             # this code is only called when isSlave is True?
             print('fadeDown - Slave - waiting until : ', syncTimestamp)
-            pause.until(syncTimestamp)
+            self.pauseIfSync(syncTimestamp)
 
         if interval > 0:
             playerVolumeNow = self.audioPlayer.getVolume()
@@ -293,13 +291,17 @@ class LushRoomsPlayer():
             self.audioPlayer.exit()
             return 0
 
+    def getLocalTimestamp(self):
+        return datetime.datetime.now()
+
     def pauseIfSync(self, syncTimestamp=None):
-        print('synctime in LushRoomsPlayer: ', ctime(syncTimestamp))
+        print('synctime in LushRoomsPlayer: ',
+              syncTimestamp, " :: ", syncTimestamp)
         if syncTimestamp:
             print("*" * 30)
             print("** syncTimestamp found for pairing mode!")
             print(
-                f"Pausing next LushRoomsPlayer command until {ctime(syncTimestamp)}")
+                f"Pausing next LushRoomsPlayer command until {syncTimestamp}, time now is {self.getLocalTimestamp()}")
             print("*" * 30)
             pause.until(syncTimestamp)
 
@@ -308,11 +310,10 @@ class LushRoomsPlayer():
 
     def commandFromMaster(self, masterStatus, command, position, startTime):
 
-        localTimestamp = calendar.timegm(
-            datetime.datetime.now().timetuple())
+        localTimestamp = self.getLocalTimestamp()
 
         print('commandFromMaster :: currentUnixTimestamp (local on pi: )',
-              ctime(localTimestamp))
+              localTimestamp)
 
         res = 1
         if self.audioPlayer.paired:
@@ -322,8 +323,8 @@ class LushRoomsPlayer():
             print('startTime: ', startTime)
 
             print("*" * 30)
-            print(f"SLAVE COMMAND RECEIVED {command}, events sync at: ", ctime(
-                startTime))
+            print(f"SLAVE COMMAND RECEIVED {command}, events sync at: ",
+                  startTime)
             print("*" * 30)
 
             # All commands are mutually exclusive
@@ -374,15 +375,15 @@ class LushRoomsPlayer():
             print('sending command to slave: ', command)
             try:
 
-                localTimestamp = calendar.timegm(
-                    datetime.datetime.now().timetuple())
+                localTimestamp = self.getLocalTimestamp()
 
                 print('currentUnixTimestamp (local on pi: )',
-                      ctime(localTimestamp))
-                self.eventSyncTime = localTimestamp + self.slaveCommandOffset
+                      localTimestamp)
+                self.eventSyncTime = localTimestamp + \
+                    datetime.timedelta(0, self.slaveCommandOffsetSeconds)
                 print("*" * 30)
-                print(f"MASTER COMMAND SENT {command}, events sync at: ", ctime(
-                    self.eventSyncTime))
+                print(f"MASTER COMMAND SENT {command}, events sync at: ",
+                      self.eventSyncTime)
                 print("*" * 30)
 
                 # send the event sync time to the slave...
@@ -390,7 +391,7 @@ class LushRoomsPlayer():
                     'command': str(command),
                     'position': str(position),
                     'master_status': self.getStatus(),
-                    'sync_timestamp': self.eventSyncTime
+                    'sync_timestamp': str(self.eventSyncTime)
                 }
 
                 def slaveRequest():

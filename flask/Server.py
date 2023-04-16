@@ -29,6 +29,7 @@ from flask import Flask, request, send_from_directory, render_template
 from os.path import splitext
 import os
 import os.path
+import datetime
 
 print("LushRooms player starting!")
 
@@ -405,7 +406,9 @@ class Command(Resource):
             command["master_status"],
             command["command"],
             command["position"],
-            command["sync_timestamp"]
+            datetime.datetime.strptime(
+                command["sync_timestamp"], '%Y-%m-%d %H:%M:%S.%f')
+
         )
 
         return jsonify(res)

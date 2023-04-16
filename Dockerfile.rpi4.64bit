@@ -19,7 +19,7 @@ RUN apt-get update && apt-get upgrade
 RUN apt-get install -y --no-install-recommends \
     apt-utils build-essential gcc make git wget ntp ifmetric man iputils-ping
 
-RUN apt-get -y install fbset vlc=3.0.18-0+rpt2+deb11u1 \
+RUN apt-get -y install fbset mpv libmpv-dev python3-mpv \
     python3-dev python3-pip python3-pil python3-numpy python3-scipy
 
 # packages perhaps suitable for new lrpi_base END

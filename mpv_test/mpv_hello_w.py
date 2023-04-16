@@ -69,13 +69,10 @@ player["pause"] = False
 player.wait_until_playing()
 # If we can figure alsa configs out, we can decouple mpv audio devices from board specific devices; they will depend on the device definitions we set up in alsa
 #
-# ideally we'd switch between 'alsa/hdmiSurround51' and 'alsa/headphoneJackStereo' here
-#
-# but we might have to settle for
 # hdmi = alsa/hdmiSurround51
 # jack = alsa/headphoneJackStereo
 # the above will work with the contents of 'mpv_test/asoundrc_example_51' saved in /etc/asound.conf
-# player["audio-device"] = 'alsa/headphoneJackStereo'
+player["audio-device"] = 'alsa/headphoneJackStereo'
 
 
 # and some commands

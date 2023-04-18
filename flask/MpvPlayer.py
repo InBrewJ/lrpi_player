@@ -28,7 +28,8 @@ class Mpv():
         "ytdl": False,
         "input_default_bindings": True,
         "input_vo_keyboard": False,
-        # "log_handler": mpv_logger
+        "audio_channels": 6,
+        "log_handler": mpv_logger
     }
 
     # makes mpv.MPV a bonafide singleton
@@ -77,45 +78,42 @@ class MpvPlayer():
         self.paired = False
         self.masterIp = ""
         self.sourcePath = ""
-        settings_json = settings.get_settings()
+        self.settings_json = settings.get_settings()
         self.initialVolumeFromSettings: int = int(
-            settings_json["audio_volume"])
+            self.settings_json["audio_volume"])
 
     def validateTrackPath(self, pathToTrack):
         # todo: think about safely using this
         if not os.path.isfile(pathToTrack):
             raise Exception(f"{pathToTrack} is not a valid path")
 
-    def getAudioOutput(self, settings_json):
+    def getAudioOutput(self):
         # lrpi_player#105
         # Audio output can be routed through hdmi or the jack,
-        # if settings.json is corrupted, default to the jack
-        output_route = settings_json.get("audio_output")
+        # if settings.json is corrupted, default to alsamixer 'auto'
 
-        # output_route is jack or hdmi...
+        output_route_from_settings = self.settings_json.get("audio_output")
 
-        # platform-bcm2835_audio.analog-stereo is the jack on RPi4
-        normalised_audio_device_output = 'alsa_output.platform-bcm2835_audio.analog-stereo'
-        return normalised_audio_device_output
+        print(
+            f"Attempting to set mpv audio output to {output_route_from_settings}")
 
-    def setOutputDevice(self, device_id):
-        print(f"Setting mpv audio output to {device_id}")
+        output_map_rpi4_lushrooms = {
+            "hdmi": "alsa/upmix",
+            "jack": "alsa/sysdefault:CARD=Headphones",
+            "default": "auto"
+        }
 
-        # something related to this:
-        # https://raspberrypi.stackexchange.com/a/127517
-        #
-        # test on command line first!
-        #
-        # host of resources here, too
-        # https://elinux.org/New_Pi_OS_sound_trouble_shooting
+        if output_route_from_settings not in output_map_rpi4_lushrooms:
+            print(
+                f"Output device from settings.json not recognised, defaulting to 'auto'")
+            return output_map_rpi4_lushrooms['default']
 
-        # must be set in /etc/asound.conf
-        # see mpv_test/asoundrc_example_51
-        for_hdmi = 'alsa/hdmiSurround51'
-        for_jack = 'alsa/headphoneJackStereo'
-        fallback = 'default'
+        print(
+            f"Setting output device to {output_route_from_settings} (from settings) and {output_map_rpi4_lushrooms[output_route_from_settings]} from map")
+        return output_map_rpi4_lushrooms[output_route_from_settings]
 
-        Mpv.instance()["audio-device"] = for_jack
+    def setOutputDevice(self):
+        Mpv.instance()["audio-device"] = self.getAudioOutput()
 
     def initGymnastics(self):
         self.setDefaultVolumeFromSettings()
@@ -154,6 +152,7 @@ class MpvPlayer():
             Mpv.paused_instance()
             Mpv.instance().play(pathToTrack)
             Mpv.instance().wait_until_paused()
+            self.setOutputDevice()
 
         if not withPause:
             Mpv.paused_instance()
@@ -162,6 +161,7 @@ class MpvPlayer():
             Mpv.instance()["pause"] = False
             print("****** WAITING UNTIL PLAYBACK BEGINS ******")
             Mpv.instance().wait_until_playing()
+            self.setOutputDevice()
 
         self.setDefaultVolumeFromSettings()
 

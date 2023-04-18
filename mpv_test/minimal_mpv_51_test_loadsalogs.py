@@ -18,11 +18,11 @@ from time import sleep
 # also this - set audio-channels=auto
 # https://mpv.io/manual/master/#audio-output-drivers-alsa
 
-path_to_track = '/home/inbrewj/workshop/LushRooms/faux_usb/tracks/17_Tales_of_bath/02_Tales_of_bath_Poem.mp4'
+path_to_track = '/home/jib/workshop/LushRooms/faux_usb/tracks/17_Tales_of_bath/02_Tales_of_bath_Poem.mp4'
 
 
 player = mpv.MPV(ytdl=False, input_default_bindings=True,
-                 input_vo_keyboard=False, pause=True, audio_channels='auto', log_handler=print)
+                 input_vo_keyboard=False, pause=True, audio_channels=6, log_handler=print)
 player.set_loglevel('v')
 player.wait_for_property('idle-active')
 
@@ -66,6 +66,10 @@ player.wait_until_paused()
 # CHANGE AUDIO DEVICE HERE
 ###########################
 # 'auto' and 'alsa' should work if alsa is working correctly
+#
+# On pisuke's setup, attempt to mimic
+#  " mpv --audio-device='alsa/upmix' --audio-channels=6"
+# for a working 5.1 output
 player["audio-device"] = 'alsa'
 
 sleep(1)

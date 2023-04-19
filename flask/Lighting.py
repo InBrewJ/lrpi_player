@@ -152,6 +152,7 @@ class LushRoomsLighting():
     def initHUE(self):
         try:
             if self.PLAY_HUE:
+                print("Initialising HUE lighting...")
                 HUE_IP_ADDRESS = find_hue.hue_ip()
 
                 if HUE_IP_ADDRESS == None:
@@ -160,7 +161,7 @@ class LushRoomsLighting():
                     return
 
                 self.bridge = Bridge(
-                    HUE_IP_ADDRESS, config_file_path="/home/inbrewj/workshop/LushRooms/faux_usb/python_hue")
+                    HUE_IP_ADDRESS, config_file_path="/media/usb/python_hue")
                 # If the app is not registered and the button is not pressed, press the button and call connect() (this only needs to be run a single time)
                 self.bridge.connect()
                 # Get the bridge state (This returns the full dictionary that you can explore)
@@ -433,7 +434,7 @@ class LushRoomsLighting():
         self.dmx_interpolator.__init__()
         subs_length = len(self.subs)
 
-        if self.PLAY_HUE == False and self.PLAY_HUE == False:
+        if self.PLAY_HUE == False and self.PLAY_DMX == False:
             print("All lighting is disabled, not starting lighting event loop...")
             return
 

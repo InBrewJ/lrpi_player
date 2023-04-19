@@ -441,8 +441,8 @@ class ScentRoomTrigger(Resource):
             if body['trigger'] == "start" and body["upload_path"]:
                 if player == None:
                     player = LushRoomsPlayer(None, None)
-                    player.start(
-                        body["upload_path"], None, "/home/inbrewj/workshop/LushRooms/faux_usb/uploads/01_scentroom.srt")
+                    player.start(body["upload_path"], None,
+                                 "/media/usb/uploads/01_scentroom.srt")
                     return jsonify({'response': 200, 'description': 'ok!'})
 
             elif body['trigger'] == "stop":

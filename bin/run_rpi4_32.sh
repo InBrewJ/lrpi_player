@@ -19,18 +19,17 @@ lushroom-player-rpi4:32bit
 
 # --restart=always \
 
-# or, for 64bit, from docker hub
+# or, for 64bit, from  local docker load
 
 sudo docker run -it --rm --network host -p 80:80 \
 --env PORT=80 \
 -v $HOME/.pulse:/home/vlc/.pulse:rw \
 -v /dev/shm:/dev/shm \
 -v /dev/snd:/dev/snd \
--v /var/lib/dbus:/var/lib/dbus \
 -v /media/usb:/media/usb \
 --privileged \
 --device /dev/vchiq:/dev/vchiq \
-inbrewj/lushroom-player-rpi4:64bit
+lushroom-player:64-bit-mpv
 
 
 # or, for 64bit, from lushdigital docker hub
@@ -45,3 +44,6 @@ sudo docker run -it --rm --network host -p 80:80 \
 --privileged \
 --device /dev/vchiq:/dev/vchiq \
 lushdigital/lushroom-player:rpi4-64bit-mpv
+
+
+# sudo docker run -d --rm --network host -p 80:80 --env PORT=80 -v $HOME/.pulse:/home/vlc/.pulse:rw -v /dev/shm:/dev/shm -v /dev/snd:/dev/snd -v /mnt/usb1/lushrooms2023/:/media/usb --privileged --device /dev/vchiq:/dev/vchiq lushdigital/lushroom-player:rpi4-64bit-mpv

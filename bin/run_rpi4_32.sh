@@ -46,4 +46,8 @@ sudo docker run -it --rm --network host -p 80:80 \
 lushdigital/lushroom-player:rpi4-64bit-mpv
 
 
-# sudo docker run -d --rm --network host -p 80:80 --env PORT=80 -v $HOME/.pulse:/home/vlc/.pulse:rw -v /dev/shm:/dev/shm -v /dev/snd:/dev/snd -v /mnt/usb1/lushrooms2023/:/media/usb --privileged --device /dev/vchiq:/dev/vchiq lushdigital/lushroom-player:rpi4-64bit-mpv
+# redcube
+# sudo docker run --rm --network host -p 80:80 --env PORT=80 -v $HOME/.pulse:/home/vlc/.pulse:rw -v /dev/shm:/dev/shm -v /dev/snd:/dev/snd -v /mnt/usb1/lushrooms2023/:/media/usb --privileged --device /dev/vchiq:/dev/vchiq lushdigital/lushroom-player:rpi4-64bit-mpv
+
+# greencube
+# sudo docker run --rm --network host -p 80:80 --env PORT=80 -v $HOME/.pulse:/home/vlc/.pulse:rw -v /dev/shm:/dev/shm -v /dev/snd:/dev/snd -v /home/jib/workshop/LushRooms/faux_usb/:/media/usb --privileged --device /dev/vchiq:/dev/vchiq lushdigital/lushroom-player:rpi4-64bit-mpv

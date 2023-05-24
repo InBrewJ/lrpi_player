@@ -143,6 +143,10 @@ class MpvPlayer():
         return self.setVolume(self.initialVolumeFromSettings)
 
     def triggerStart(self, pathToTrack, withPause=False):
+        # todo: include this, return a useful error if validation fails,
+        # DO NOT CRASH THE SERVER
+        # add another unit/system test...
+        # self.validateTrackPath(pathToTrack)
         initGymnastics = withPause
         self.initPlayer(pathToTrack, initGymnastics)
 

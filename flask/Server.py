@@ -105,7 +105,9 @@ def printOmxVars():
 
 
 def loadSettings():
-    # return a graceful error if contents.json can't be found
+    """ 
+        Load contents.json and return a graceful error if the file can't be found. 
+    """
 
     settings_json = settings.get_settings()
     settings_json = settings_json.copy()

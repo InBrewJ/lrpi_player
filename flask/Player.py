@@ -2,6 +2,7 @@ import os
 from os import uname, system
 from time import sleep
 import time
+from time import perf_counter
 import urllib.request
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -128,14 +129,17 @@ class LushRoomsPlayer():
             self.pauseIfSync(syncTime)
 
         self.started = True
+        # todo: replace this with the decorator from the Rpi3 branch
+        t1_start = perf_counter()
         track_length_seconds = self.audioPlayer.start(
             path, self.isMaster(), self.isSlave())
+        t1_stop = perf_counter()
+        print("LushRooms audioPlayer start() took:", t1_stop - t1_start)
 
         try:
-            # todo: uncomment!
             self.lighting.start(self.audioPlayer, self.subs)
         except Exception as e:
-            print('Lighting failed: ', e)
+            print('Lighting start failed: ', e)
 
         return track_length_seconds
 

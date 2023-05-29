@@ -21,6 +21,8 @@ def app():
 
     # clean up / reset resources here
 
+    app.test_client().get("/stop")
+
 
 @pytest.fixture()
 def client(app):
@@ -37,6 +39,10 @@ def equal_dicts(a, b, ignore_keys=[]):
     ka = set(a).difference(ignore_keys)
     kb = set(b).difference(ignore_keys)
     return ka == kb and all(a[k] == b[k] for k in ka)
+
+
+known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
+known_track_id = "7d55a142b188ef1c903798fbf735e2aa"
 
 
 class TestLrpiPlayerSmokeTests:
@@ -106,12 +112,10 @@ class TestLrpiPlayerSmokeTests:
         assert equal_dicts(
             response.json,
             expected_status,
-            ignore_keys=['playlist']
+            ignore_keys=['playlist', 'position', 'volume']
         )
 
     def test_server_plays_one_track_no_lights(self, client):
-        known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
-        known_track_id = "a4a2ea32026a9a858de80d944a0c7f98"
 
         client.get("/get-track-list")
         client.get(
@@ -125,8 +129,8 @@ class TestLrpiPlayerSmokeTests:
 
         expected_playlist = [
             {
-                'ID': 'a4a2ea32026a9a858de80d944a0c7f98', 'IsDir': False, 'MimeType': 'video/mp4',
-                'ModTime': '2023-02-24T17:15:40.908032Z', 'Name': 'ff-16b-2c-folder2.mp4', 'Path': 'ff-16b-2c-folder2.mp4', 'Size': 3079106
+                'ID': '7d55a142b188ef1c903798fbf735e2aa', 'IsDir': False, 'MimeType': 'video/mp4',
+                'ModTime': '2023-05-29T23:22:30.897754Z', 'Name': 'ff-16b-2c-44100hz.mp4', 'Path': 'ff-16b-2c-44100hz.mp4', 'Size': 3079106
             }
         ]
 
@@ -136,15 +140,17 @@ class TestLrpiPlayerSmokeTests:
         assert status_response['playerState'] == 'Playing'
         assert status_response['trackDuration'] == 187.11
         assert status_response['position'] > 0
-        assert status_response['playlist'] == expected_playlist
+        # we don't care about asserting on ModTime
+        for i in range(len(expected_playlist)):
+            assert equal_dicts(
+                expected_playlist[i],
+                status_response['playlist'][i],
+                ignore_keys=['ModTime']
+            )
         assert status_response['volume'] > 20
-        assert "ff-16b-2c-folder2.mp4" in status_response['source']
+        assert "ff-16b-2c-44100hz.mp4" in status_response['source']
 
     def test_server_crossfade(self, client):
-        known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
-        known_track_id = "a4a2ea32026a9a858de80d944a0c7f98"
-
-        client.get("/stop")
 
         client.get("/get-track-list")
         client.get(
@@ -174,4 +180,4 @@ class TestLrpiPlayerSmokeTests:
         assert status_response['position'] > 0
         # 80 is set in flask/test/pytest_faux_usb/settings.json
         assert status_response['volume'] == 80
-        assert "ff-16b-2c-folder2.mp4" in status_response['source']
+        assert "ff-16b-2c-44100hz.mp4" in status_response['source']

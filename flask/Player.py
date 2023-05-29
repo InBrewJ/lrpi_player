@@ -24,24 +24,38 @@ NTP_SERVER = 'uk.pool.ntp.org'
 
 
 def findArm():
+
     return uname().machine == 'armv7l'
 
 
-if False:
-    # For Rpi 3 system
-    from OmxPlayer import OmxPlayer
-    # For systems where VLC decodes high bitrate audio fast enough
-    from VlcPlayer import VlcPlayer
-else:
-    # For now, for Rpi 4
-    from MpvPlayer import MpvPlayer
+def getPlatformSpecificPlayer():
+    # x86_64 for intel
+    # armv7l for RPi3
+    # aarch64 for RPi4 64bit
+    # if none of the above, return omxplayer?
+    machineType = uname().machine
+
+    if machineType == 'x86_64':
+        from VlcPlayer import VlcPlayer
+        return VlcPlayer()
+
+    if machineType == 'armv7l':
+        from OmxPlayer import OmxPlayer
+        return OmxPlayer()
+
+    if machineType == 'aarch64':
+        from MpvPlayer import MpvPlayer
+        return MpvPlayer()
+
+    raise Exception('Unsupported platform :: ' + machineType)
 
 
 class LushRoomsPlayer():
     def __init__(self, playlist, basePath):
         print('Spawning LushRoomsPlayer')
+        # TODO: store this in the player itself...
         self.audioPlayerType = "MPV"
-        self.audioPlayer = MpvPlayer()
+        self.audioPlayer = getPlatformSpecificPlayer()
         self.lighting = LushRoomsLighting()
         self.basePath = basePath
         self.started = False
@@ -115,7 +129,7 @@ class LushRoomsPlayer():
             # if the command is 'start' we need to prime both players
             # so that we can simply press 'play' on the track
             # this ensures that tracks start at as close to the same
-            # time as possible, minimising the 'springhall reverb' effect
+            # time as possible, minimising the 'springyhall reverb' effect
 
             print(f'Master :: priming master player subtitles from {subsPath}')
             self.subs = self.loadSubtitles(subsPath)

@@ -13,3 +13,11 @@ __pycache__/
 
 push_to_inbrewj.sh
 push_to_lush.sh
+
+# allow unit / system test related files
+
+!flask/test/pytest_faux_usb/*
+!flask/test/pytest_faux_usb/settings.json
+
+!flask/test/pytest_faux_usb/tracks/**/*.mp4
+!flask/test/pytest_faux_usb/tracks/**/*.srt

@@ -1,0 +1,18 @@
+{
+  "name": "LRPI 4 DUT",
+  "dmx_brightness": "254",
+  "hue_name": "",
+  "hue_bridge_id": null,
+  "paired": "",
+  "debug": "True",
+  "slave_ip": "",
+  "reset_hue_command": "{'transitiontime' : 5, 'on' : True, 'bri' : 50, 'sat' : 100, 'hue' : 0, 'ct' : 450}",
+  "fade_interval": "5",
+  "audio_output": "jack",
+  "audio_volume": "80",
+  "activate_idle_loop": "true",
+  "hue_brightness": "254",
+  "reset_dmx_command": "DMX1(20,20,20,20,20,20,20,20)",
+  "hue_ip": "disabled",
+  "media_base_path": "/home/inbrewj/workshop/scratch/lrpi_player/flask/test/pytest_faux_usb/tracks/"
+}

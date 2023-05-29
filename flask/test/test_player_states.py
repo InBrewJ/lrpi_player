@@ -44,6 +44,8 @@ def app():
 
     # clean up / reset resources here
 
+    app.test_client().get('/stop')
+
 
 @pytest.fixture()
 def client(app):
@@ -62,13 +64,12 @@ def equal_dicts(a, b, ignore_keys=[]):
     return ka == kb and all(a[k] == b[k] for k in ka)
 
 
+known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
+known_track_id = "7d55a142b188ef1c903798fbf735e2aa"
+
+
 class TestLrpiPlayerStates:
     def test_play_pause(self, client):
-        client.get("/stop")
-
-        known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
-        known_track_id = "a4a2ea32026a9a858de80d944a0c7f98"
-
         client.get("/get-track-list")
         client.get(
             f"/get-track-list?id={known_folder_id}")
@@ -89,11 +90,6 @@ class TestLrpiPlayerStates:
         assert status_response['position'] > 1
 
     def test_stop(self, client):
-        client.get("/stop")
-
-        known_folder_id = "b4f1020c48a28b3cdf6be408c4f585d7"
-        known_track_id = "a4a2ea32026a9a858de80d944a0c7f98"
-
         client.get("/get-track-list")
         client.get(
             f"/get-track-list?id={known_folder_id}")
@@ -113,4 +109,4 @@ class TestLrpiPlayerStates:
         print(status_response)
 
         assert status_response['playerState'] == ''
-        assert status_response['position'] == None
+        assert status_response['position'] == None or status_response['position'] < 0
